@@ -1,0 +1,143 @@
+#!/bin/zsh
+set -euo pipefail
+
+expected_root="/Users/home/Workspace/Apps/Rusty"
+repo_root="$(cd "$(dirname "$0")/.." && pwd -P)"
+check_config=false
+verify_bundles=false
+verify_log=""
+
+fail() {
+    print -u2 "release preflight failed: $*"
+    exit 1
+}
+
+usage() {
+    cat <<'EOF'
+Usage: scripts/release-preflight.zsh [options]
+
+Options:
+  --check-config-only      verify this checkout is the active Rusty release source
+  --verify-log PATH        reject build logs that contain stale RustyDups paths/binaries
+  --verify-bundles         verify Rusty.app and Rusty_*.dmg landed under this checkout
+  --repo-root PATH         override repo root for tests
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --check-config-only)
+            check_config=true
+            shift
+            ;;
+        --verify-log)
+            [[ $# -ge 2 ]] || fail "--verify-log requires a path"
+            verify_log="$2"
+            shift 2
+            ;;
+        --verify-bundles)
+            verify_bundles=true
+            shift
+            ;;
+        --repo-root)
+            [[ $# -ge 2 ]] || fail "--repo-root requires a path"
+            repo_root="$(cd "$2" 2>/dev/null && pwd -P)" || repo_root="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            fail "unknown option: $1"
+            ;;
+    esac
+done
+
+if [[ "$check_config" == false && -z "$verify_log" && "$verify_bundles" == false ]]; then
+    check_config=true
+fi
+
+reject_stale_path() {
+    local value="$1"
+    local label="$2"
+    [[ "$value" != *"/RustyDups"* ]] || fail "$label points at stale RustyDups path: $value"
+    [[ "$value" != *"/rustydups"* ]] || fail "$label points at stale rustydups path: $value"
+}
+
+check_release_config() {
+    [[ "$repo_root" == "$expected_root" ]] || fail "repo root must be $expected_root, got $repo_root"
+    reject_stale_path "$repo_root" "repo root"
+
+    [[ -f "$repo_root/Cargo.toml" ]] || fail "missing root Cargo.toml"
+    [[ -f "$repo_root/src-tauri/Cargo.toml" ]] || fail "missing src-tauri/Cargo.toml"
+    [[ -f "$repo_root/src-tauri/tauri.conf.json" ]] || fail "missing src-tauri/tauri.conf.json"
+
+    grep -Eq '^[[:space:]]*name[[:space:]]*=[[:space:]]*"rusty"[[:space:]]*$' "$repo_root/src-tauri/Cargo.toml" \
+        || fail "src-tauri/Cargo.toml must name the package/bin rusty"
+    ! grep -Eq '^[[:space:]]*name[[:space:]]*=[[:space:]]*"rustydups"[[:space:]]*$' "$repo_root/src-tauri/Cargo.toml" \
+        || fail "src-tauri/Cargo.toml still names a rustydups package or binary"
+    grep -Eq '"productName"[[:space:]]*:[[:space:]]*"Rusty"' "$repo_root/src-tauri/tauri.conf.json" \
+        || fail "tauri.conf.json productName must be Rusty"
+    ! grep -Eq 'RustyDups|rustydups' "$repo_root/src-tauri/tauri.conf.json" \
+        || fail "tauri.conf.json contains stale RustyDups/rustydups text"
+
+    [[ ! -e "$repo_root/target/release/rustydups" ]] \
+        || fail "stale binary exists: $repo_root/target/release/rustydups"
+    if [[ -d "$repo_root/target/release/bundle" ]]; then
+        local stale_bundle
+        stale_bundle="$(find "$repo_root/target/release/bundle" \( -name '*RustyDups*' -o -name 'rustydups' \) -print -quit)"
+        [[ -z "$stale_bundle" ]] || fail "stale bundle artifact exists: $stale_bundle"
+    fi
+}
+
+verify_build_log() {
+    local log_path="$1"
+    [[ -f "$log_path" ]] || fail "build log not found: $log_path"
+
+    local matches
+    matches="$(grep -En 'RustyDups|/rustydups|target/release/rustydups|Contents/MacOS/rustydups|Compiling rustydups|Built application at: .*rustydups' "$log_path" || true)"
+    [[ -z "$matches" ]] || fail "stale RustyDups path or rustydups binary found in $log_path:
+$matches"
+}
+
+verify_bundle_outputs() {
+    local version
+    version="$(grep -E '"version"[[:space:]]*:' "$repo_root/src-tauri/tauri.conf.json" | head -n 1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+    [[ -n "$version" ]] || fail "could not read Tauri version"
+
+    local binary="$repo_root/target/release/rusty"
+    local app="$repo_root/target/release/bundle/macos/Rusty.app"
+    local app_binary="$app/Contents/MacOS/rusty"
+    local dmg="$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg"
+
+    reject_stale_path "$binary" "release binary"
+    reject_stale_path "$app" "app bundle"
+    reject_stale_path "$app_binary" "app executable"
+    reject_stale_path "$dmg" "dmg bundle"
+
+    [[ -x "$binary" ]] || fail "missing executable release binary: $binary"
+    [[ -d "$app" ]] || fail "missing app bundle: $app"
+    [[ -x "$app_binary" ]] || fail "missing app executable: $app_binary"
+    [[ ! -e "$app/Contents/MacOS/rustydups" ]] || fail "stale app executable exists: $app/Contents/MacOS/rustydups"
+    [[ -f "$dmg" ]] || fail "missing dmg bundle: $dmg"
+
+    print "Verified bundle outputs:"
+    print "  $binary"
+    print "  $app"
+    print "  $dmg"
+}
+
+if [[ "$check_config" == true ]]; then
+    check_release_config
+    print "Release config OK: $repo_root"
+fi
+
+if [[ -n "$verify_log" ]]; then
+    verify_build_log "$verify_log"
+    print "Build log OK: $verify_log"
+fi
+
+if [[ "$verify_bundles" == true ]]; then
+    verify_bundle_outputs
+fi

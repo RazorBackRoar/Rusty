@@ -1,0 +1,38 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rusty">
+  <defs>
+    <linearGradient id="bg" x1="0.12" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#FFB264"/>
+      <stop offset="0.52" stop-color="#FB8C2E"/>
+      <stop offset="1" stop-color="#DF5409"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFF1E4"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="22" stdDeviation="30" flood-color="#5E2400" flood-opacity="0.30"/>
+    </filter>
+  </defs>
+
+  <!-- App tile -->
+  <rect x="0" y="0" width="1024" height="1024" rx="232" ry="232" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1024" height="1024" rx="232" ry="232" fill="url(#sheen)"/>
+
+  <!-- Duplicate "cards" mark -->
+  <g filter="url(#cardShadow)">
+    <rect x="286" y="246" width="372" height="452" rx="58" fill="#FFFFFF" opacity="0.48"/>
+    <rect x="366" y="326" width="372" height="452" rx="58" fill="url(#card)"/>
+  </g>
+
+  <!-- Content lines on the front card -->
+  <g fill="#F6A765">
+    <rect x="424" y="414" width="236" height="34" rx="17"/>
+    <rect x="424" y="486" width="284" height="34" rx="17"/>
+    <rect x="424" y="558" width="190" height="34" rx="17"/>
+  </g>
+</svg>

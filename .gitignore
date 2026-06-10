@@ -1,0 +1,45 @@
+# Rust / Cargo
+target/
+Cargo.lock.bak
+
+# Tauri generated
+src-tauri/gen/
+src-tauri/target/
+
+# Workspace-local tauri-cli install
+.cargo/bin/
+.cargo/.crates.toml
+.cargo/.crates2.json
+.cargo/registry/
+.cargo/git/
+
+# Build logs from one-off background tasks
+build-logs/
+
+# macOS noise
+.DS_Store
+._*
+
+# Editor scratch
+*.swp
+.idea/
+
+# Old CLI scripts kept for reference (huge text guides, legacy SQLite, etc.)
+# Comment out if you actually want these tracked.
+_archive_pre_tauri/
+
+# ── Workspace standard hygiene (added 2026-06-09) ──
+*.dmg
+*.app
+.AppleDouble
+.LSOverride
+Icon?
+*.log
+*.tmp
+*.bak
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.mobileprovision

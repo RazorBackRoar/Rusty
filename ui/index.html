@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rusty</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <!-- ───────────────────────── Toolbar ───────────────────────── -->
+    <header class="toolbar">
+      <div class="brand">
+        <img class="logo-img" src="logo.svg" alt="Rusty" />
+        <div class="brand-text">
+          <h1>Rusty</h1>
+          <span class="tagline">Safe duplicate finder</span>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="mode-pill dry" id="mode-seg" role="group" aria-label="Run mode">
+          <div class="mode-pill-thumb" aria-hidden="true"></div>
+          <button type="button" class="mode-opt" data-mode="dry">Dry</button>
+          <button type="button" class="mode-opt" data-mode="real">Real</button>
+        </div>
+        <button class="btn danger small" id="cancel-btn" hidden>Cancel</button>
+        <button class="btn primary" id="scan-btn">Scan</button>
+      </div>
+    </header>
+
+    <!-- ───────────────────────── Workspace ─────────────────────── -->
+    <main class="workspace">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-head"><h2>Sources</h2></div>
+          <ul class="root-list" id="root-list" aria-label="Selected folders"></ul>
+          <div class="row">
+            <button class="btn primary small" id="pick-folder">+ Add Folder</button>
+            <button class="btn small" id="clear-folders">Clear</button>
+          </div>
+          <button class="btn ghost small remembered-toggle" id="remembered-toggle" type="button" aria-expanded="false" aria-controls="remembered">↺ Add from memory</button>
+          <div class="remembered" id="remembered" hidden></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Filters</h2></div>
+          <div class="filters">
+            <label class="filter-check">
+              <input type="checkbox" id="skip-dev" checked />
+              <span>Skip dev / cache folders</span>
+            </label>
+            <label class="filter-row">
+              <span>Ignore under</span>
+              <input type="number" id="min-size-kb" min="0" step="1" value="0" />
+              <span>KB</span>
+            </label>
+            <label class="filter-stack">
+              <span>Exclude paths containing</span>
+              <input type="text" id="exclude" placeholder="/Backups/, .tmp" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Memory Bank</h2></div>
+          <dl class="kv" id="memory-stats">
+            <dt>Folders</dt><dd id="m-folders">0</dd>
+            <dt>File hashes</dt><dd id="m-files">0</dd>
+            <dt>Duplicate hashes</dt><dd id="m-hashes">0</dd>
+            <dt>Last scan</dt><dd id="m-lastscan">never</dd>
+          </dl>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Composition</h2></div>
+          <div class="donut-wrap">
+            <svg class="donut" id="donut" viewBox="0 0 120 120" aria-label="Wasted bytes by file type"></svg>
+            <div class="donut-center" id="donut-center">
+              <span class="donut-big">–</span>
+              <span class="donut-small">wasted</span>
+            </div>
+          </div>
+          <ul class="legend" id="legend"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>App Data</h2></div>
+          <ul class="paths" id="paths"></ul>
+        </section>
+      </aside>
+
+      <!-- Content -->
+      <section class="content">
+        <div class="content-head">
+          <h2 class="content-title">Files</h2>
+          <span class="results-stats" id="results-stats">No scan yet.</span>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="files">Files</button>
+          <button class="tab" data-tab="duplicates">Duplicates</button>
+          <button class="tab" data-tab="logs">Logs</button>
+        </div>
+
+        <!-- Shown only in Real mode when the plan has items to quarantine -->
+        <div class="plan-action-bar" id="plan-action-bar" hidden>
+          <span class="plan-summary" id="plan-summary">No plan yet.</span>
+          <div class="plan-controls">
+            <label class="keeper-rule">Keep
+              <select id="keeper-rule">
+                <option value="shortest_path">shortest path</option>
+                <option value="longest_path">longest path</option>
+                <option value="oldest">oldest</option>
+                <option value="newest">newest</option>
+              </select>
+            </label>
+            <button class="btn danger small" id="apply-plan-btn" disabled>Apply Plan</button>
+          </div>
+        </div>
+
+        <div class="panels">
+          <div class="tab-panel active" id="panel-files">
+            <div class="empty" id="files-empty">
+              <span class="empty-mark">⌕</span>
+              <span class="empty-title">No scan yet</span>
+              <span class="empty-text">Add folders in the sidebar, then press Scan.</span>
+            </div>
+            <div class="scan-summary" id="scan-summary"></div>
+            <div class="files-head" id="files-head"></div>
+            <div class="file-list" id="file-list"></div>
+          </div>
+
+          <div class="tab-panel" id="panel-duplicates">
+            <div class="empty" id="dups-empty">
+              <span class="empty-mark">⌕</span>
+              <span class="empty-title">No duplicates yet</span>
+              <span class="empty-text">Add folders in the sidebar, then press Scan.</span>
+            </div>
+            <div class="groups" id="duplicates"></div>
+          </div>
+
+          <div class="tab-panel" id="panel-logs">
+            <div class="log-toolbar">
+              <button class="btn small" id="clear-logs">Clear</button>
+              <label class="auto-follow"><input type="checkbox" id="follow" checked /> Auto-follow</label>
+            </div>
+            <div class="logs" id="logs"></div>
+            <div class="logs-footer">
+              <button class="btn" id="export-btn" disabled>Export report</button>
+            </div>
+          </div>
+
+          <!-- Loading state -->
+          <div class="loading-veil" id="loading-veil" hidden>
+            <div class="spinner"></div>
+            <div class="loading-text" id="loading-text">Scanning…</div>
+            <div class="progress" id="progress">
+              <div class="progress-fill" id="progress-fill"></div>
+              <span class="progress-pct" id="progress-pct">0%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ───────────────────────── Status bar ────────────────────── -->
+    <footer class="statusbar">
+      <div class="status-left">
+        <span class="status" id="status">Idle</span>
+        <div class="status-progress" id="status-progress" hidden>
+          <div class="status-progress-track">
+            <div class="status-progress-fill" id="status-progress-fill"></div>
+          </div>
+          <span class="status-progress-pct" id="status-progress-pct">0%</span>
+        </div>
+        <button class="btn small undo-btn" id="undo-btn" type="button" hidden>↶ Undo last quarantine</button>
+      </div>
+      <div class="counters" id="counters"></div>
+    </footer>
+
+    <!-- Confirmation modal -->
+    <div class="modal-backdrop" id="confirm-backdrop" hidden>
+      <div class="modal" role="dialog" aria-labelledby="confirm-title" aria-modal="true">
+        <h3 id="confirm-title">Proceed with real run?</h3>
+        <p id="confirm-body">
+          The current plan will move duplicate copies to the app's quarantine folder.
+          A manifest will be written so the move is reversible.
+        </p>
+        <ul class="confirm-summary" id="confirm-summary"></ul>
+        <p class="confirm-prompt"><b>Type <code>y</code> to confirm or <code>n</code> to cancel.</b></p>
+        <input class="confirm-input" id="confirm-input" type="text" autocomplete="off" maxlength="3" />
+        <div class="row right">
+          <button class="btn" id="confirm-no">Cancel</button>
+          <button class="btn danger" id="confirm-yes" disabled>Yes, apply</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

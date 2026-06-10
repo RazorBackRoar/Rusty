@@ -7,7 +7,7 @@ version = "0.2.0"
 edition = "2021"
 authors = ["Rusty"]
 license = "MIT"
-repository = "https://github.com/local/rusty"
+repository = "https://github.com/RazorBackRoar/Rusty"
 
 [profile.release]
 opt-level = 3

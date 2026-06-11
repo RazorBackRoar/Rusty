@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 preflight="$repo_root/scripts/release-preflight.zsh"
+release_build="$repo_root/scripts/release-build.zsh"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/rusty-release-preflight.XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT
 
@@ -39,11 +40,26 @@ EOF
 
 good_log="$tmp_dir/good.log"
 cat >"$good_log" <<EOF
+Rusty release build
+Repository: $repo_root
+Log: $good_log
 Compiling rusty v0.2.0 ($repo_root/src-tauri)
 Built application at: $repo_root/target/release/rusty
 Finished 2 bundles at:
     $repo_root/target/release/bundle/macos/Rusty.app
     $repo_root/target/release/bundle/dmg/Rusty_0.2.0_aarch64.dmg
+EOF
+
+wrong_root_log="$tmp_dir/wrong-root.log"
+cat >"$wrong_root_log" <<EOF
+Rusty release build
+Repository: /Users/home/Workspace/OtherRusty
+Log: $wrong_root_log
+Compiling rusty v0.2.0 (/Users/home/Workspace/OtherRusty/src-tauri)
+Built application at: /Users/home/Workspace/OtherRusty/target/release/rusty
+Finished 2 bundles at:
+    /Users/home/Workspace/OtherRusty/target/release/bundle/macos/Rusty.app
+    /Users/home/Workspace/OtherRusty/target/release/bundle/dmg/Rusty_0.2.0_aarch64.dmg
 EOF
 
 portable_root="$tmp_dir/Rusty"
@@ -55,7 +71,14 @@ EOF
 cat >"$portable_root/src-tauri/Cargo.toml" <<'EOF'
 [package]
 name = "rusty"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
 EOF
+mkdir -p "$portable_root/src-tauri/src"
+print 'pub fn placeholder() {}' >"$portable_root/src-tauri/src/lib.rs"
 cat >"$portable_root/src-tauri/tauri.conf.json" <<'EOF'
 {
   "productName": "Rusty",
@@ -76,12 +99,17 @@ EOF
 
 run_expect_pass config "$preflight" --check-config-only
 run_expect_fail wrong-root "$preflight" --repo-root /Users/home/Workspace/Apps/RustyDups --check-config-only
+run_expect_fail redirected-target env CARGO_TARGET_DIR=/Users/home/Workspace/RustyDups/target \
+    "$preflight" --check-config-only
+run_expect_pass release-target-lock grep -Fq \
+    'export CARGO_TARGET_DIR="$repo_root/target"' "$release_build"
 run_expect_pass portable-config "$preflight" --allow-other-root --repo-root "$portable_root" --check-config-only
 
 sed -i '' 's/"width": 500/"width": 501/' "$portable_root/src-tauri/tauri.conf.json"
 run_expect_fail changed-dmg-lock "$preflight" --allow-other-root --repo-root "$portable_root" --check-config-only
 
 run_expect_fail stale-log "$preflight" --verify-log "$stale_log"
+run_expect_fail wrong-log-root "$preflight" --verify-log "$wrong_root_log"
 run_expect_pass good-log "$preflight" --verify-log "$good_log"
 
 print "release preflight tests passed"

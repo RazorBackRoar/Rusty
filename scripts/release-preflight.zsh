@@ -81,6 +81,17 @@ check_release_config() {
     [[ -f "$repo_root/src-tauri/Cargo.toml" ]] || fail "missing src-tauri/Cargo.toml"
     [[ -f "$repo_root/src-tauri/tauri.conf.json" ]] || fail "missing src-tauri/tauri.conf.json"
 
+    local cargo_metadata workspace_root target_directory
+    if ! cargo_metadata="$(cd "$repo_root" && cargo metadata --no-deps --format-version 1)"; then
+        fail "could not resolve Cargo workspace metadata from $repo_root"
+    fi
+    workspace_root="$(print -r -- "$cargo_metadata" | sed -nE 's/.*"workspace_root":"([^"]+)".*/\1/p')"
+    target_directory="$(print -r -- "$cargo_metadata" | sed -nE 's/.*"target_directory":"([^"]+)".*/\1/p')"
+    [[ "$workspace_root" == "$repo_root" ]] \
+        || fail "Cargo workspace root must be $repo_root, got ${workspace_root:-<missing>}"
+    [[ "$target_directory" == "$repo_root/target" ]] \
+        || fail "Cargo target directory must be $repo_root/target, got ${target_directory:-<missing>}"
+
     grep -Eq '^[[:space:]]*name[[:space:]]*=[[:space:]]*"rusty"[[:space:]]*$' "$repo_root/src-tauri/Cargo.toml" \
         || fail "src-tauri/Cargo.toml must name the package/bin rusty"
     ! grep -Eq '^[[:space:]]*name[[:space:]]*=[[:space:]]*"rustydups"[[:space:]]*$' "$repo_root/src-tauri/Cargo.toml" \
@@ -140,6 +151,22 @@ verify_build_log() {
     matches="$(grep -En 'RustyDups|/rustydups|target/release/rustydups|Contents/MacOS/rustydups|Compiling rustydups|Built application at: .*rustydups' "$log_path" || true)"
     [[ -z "$matches" ]] || fail "stale RustyDups path or rustydups binary found in $log_path:
 $matches"
+
+    local version
+    version="$(grep -E '"version"[[:space:]]*:' "$repo_root/src-tauri/tauri.conf.json" | head -n 1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+    [[ -n "$version" ]] || fail "could not read Tauri version"
+
+    local expected
+    for expected in \
+        "Repository: $repo_root" \
+        "Log: $log_path" \
+        "Built application at: $repo_root/target/release/rusty" \
+        "$repo_root/target/release/bundle/macos/Rusty.app" \
+        "$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg"
+    do
+        grep -Fq "$expected" "$log_path" \
+            || fail "build log does not record expected Rusty output: $expected"
+    done
 }
 
 verify_bundle_outputs() {

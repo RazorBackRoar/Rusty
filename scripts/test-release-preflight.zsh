@@ -46,8 +46,41 @@ Finished 2 bundles at:
     $repo_root/target/release/bundle/dmg/Rusty_0.2.0_aarch64.dmg
 EOF
 
+portable_root="$tmp_dir/Rusty"
+mkdir -p "$portable_root/src-tauri"
+cat >"$portable_root/Cargo.toml" <<'EOF'
+[workspace]
+members = ["src-tauri"]
+EOF
+cat >"$portable_root/src-tauri/Cargo.toml" <<'EOF'
+[package]
+name = "rusty"
+EOF
+cat >"$portable_root/src-tauri/tauri.conf.json" <<'EOF'
+{
+  "productName": "Rusty",
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "macOS": {
+      "signingIdentity": "-",
+      "dmg": {
+        "windowSize": { "width": 500, "height": 360 },
+        "appPosition": { "x": 130, "y": 160 },
+        "applicationFolderPosition": { "x": 370, "y": 160 }
+      }
+    }
+  }
+}
+EOF
+
 run_expect_pass config "$preflight" --check-config-only
 run_expect_fail wrong-root "$preflight" --repo-root /Users/home/Workspace/Apps/RustyDups --check-config-only
+run_expect_pass portable-config "$preflight" --allow-other-root --repo-root "$portable_root" --check-config-only
+
+sed -i '' 's/"width": 500/"width": 501/' "$portable_root/src-tauri/tauri.conf.json"
+run_expect_fail changed-dmg-lock "$preflight" --allow-other-root --repo-root "$portable_root" --check-config-only
+
 run_expect_fail stale-log "$preflight" --verify-log "$stale_log"
 run_expect_pass good-log "$preflight" --verify-log "$good_log"
 

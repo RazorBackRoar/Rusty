@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Rusty
+        uses: actions/checkout@v6
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify release bundle contract
+        run: zsh scripts/release-preflight.zsh --allow-other-root --check-config-only
+
+      - name: Tests
+        run: cargo test --workspace

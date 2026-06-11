@@ -6,6 +6,7 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd -P)"
 check_config=false
 verify_bundles=false
 verify_log=""
+allow_other_root=false
 
 fail() {
     print -u2 "release preflight failed: $*"
@@ -20,6 +21,7 @@ Options:
   --check-config-only      verify this checkout is the active Rusty release source
   --verify-log PATH        reject build logs that contain stale RustyDups paths/binaries
   --verify-bundles         verify Rusty.app and Rusty_*.dmg landed under this checkout
+  --allow-other-root       allow CI/test checkouts outside the canonical local path
   --repo-root PATH         override repo root for tests
 EOF
 }
@@ -37,6 +39,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --verify-bundles)
             verify_bundles=true
+            shift
+            ;;
+        --allow-other-root)
+            allow_other_root=true
             shift
             ;;
         --repo-root)
@@ -66,7 +72,9 @@ reject_stale_path() {
 }
 
 check_release_config() {
-    [[ "$repo_root" == "$expected_root" ]] || fail "repo root must be $expected_root, got $repo_root"
+    if [[ "$allow_other_root" == false ]]; then
+        [[ "$repo_root" == "$expected_root" ]] || fail "repo root must be $expected_root, got $repo_root"
+    fi
     reject_stale_path "$repo_root" "repo root"
 
     [[ -f "$repo_root/Cargo.toml" ]] || fail "missing root Cargo.toml"
@@ -81,6 +89,39 @@ check_release_config() {
         || fail "tauri.conf.json productName must be Rusty"
     ! grep -Eq 'RustyDups|rustydups' "$repo_root/src-tauri/tauri.conf.json" \
         || fail "tauri.conf.json contains stale RustyDups/rustydups text"
+
+    python3 - "$repo_root/src-tauri/tauri.conf.json" <<'PY' \
+        || fail "tauri.conf.json does not match the locked Rusty bundle/DMG contract"
+import json
+import sys
+from pathlib import Path
+
+config = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+bundle = config.get("bundle", {})
+macos = bundle.get("macOS", {})
+dmg = macos.get("dmg", {})
+
+expected = {
+    "bundle.active": (bundle.get("active"), True),
+    "bundle.targets": (bundle.get("targets"), ["app", "dmg"]),
+    "bundle.macOS.signingIdentity": (macos.get("signingIdentity"), "-"),
+    "dmg.windowSize": (dmg.get("windowSize"), {"width": 500, "height": 360}),
+    "dmg.appPosition": (dmg.get("appPosition"), {"x": 130, "y": 160}),
+    "dmg.applicationFolderPosition": (
+        dmg.get("applicationFolderPosition"),
+        {"x": 370, "y": 160},
+    ),
+}
+
+failures = [
+    f"{name}: expected {wanted!r}, got {actual!r}"
+    for name, (actual, wanted) in expected.items()
+    if actual != wanted
+]
+if failures:
+    print("\n".join(failures), file=sys.stderr)
+    raise SystemExit(1)
+PY
 
     [[ ! -e "$repo_root/target/release/rustydups" ]] \
         || fail "stale binary exists: $repo_root/target/release/rustydups"

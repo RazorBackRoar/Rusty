@@ -380,7 +380,7 @@ Bundles land at:
 
 ```
 target/release/bundle/macos/Rusty.app
-target/release/bundle/dmg/Rusty_0.2.0_aarch64.dmg
+target/release/bundle/dmg/Rusty_0.2.1_aarch64.dmg
 ```
 
 Each release run writes a timestamped log under `build-logs/`.

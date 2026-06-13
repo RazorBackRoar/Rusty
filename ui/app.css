@@ -55,7 +55,7 @@ html, body {
                "Helvetica Neue", Arial, sans-serif;
   font-size: 14px;
   color: var(--text);
-  background: linear-gradient(145deg, var(--bg-top), var(--bg-bot));
+  background: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -829,3 +829,19 @@ h3 { font-size: 15px; }
 .sidebar::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 ::selection { background: var(--accent-muted); color: #fff; }
+body.drag-over::after { content: 'Drop Folders Here'; position: fixed; inset: 0; background: hsla(24, 100%, 55%, 0.1); border: 2px dashed var(--accent); z-index: 9999; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; color: var(--accent); pointer-events: none; backdrop-filter: blur(4px); }
+
+/* ───────────────────────────── view transitions ──────────────────────────── */
+::view-transition-old(root) {
+  animation: fade-out 0.2s ease-out both;
+}
+::view-transition-new(root) {
+  animation: slide-in 0.3s cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

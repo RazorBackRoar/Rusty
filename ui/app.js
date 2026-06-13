@@ -468,92 +468,7 @@ function renderDuplicates(r) {
   groups.forEach((g, idx) => container.appendChild(renderGroup(g, idx)));
 }
 
-function renderChanges() {
-  const r = state.lastResponse;
-  const changes = r?.changes || [];
-  const container = $('changes');
-  container.innerHTML = '';
-  $('changes-empty').style.display = changes.length ? 'none' : '';
-  if (!changes.length) {
-    $('changes-empty').querySelector('.empty-text').textContent = r
-      ? 'No differences from the previous completed scan.'
-      : 'The second scan compares against the previous completed scan.';
-    return;
-  }
 
-  const counts = changes.reduce((acc, c) => {
-    const key = String(c.change_type || '').toLowerCase();
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  container.appendChild(
-    el('div', { class: 'change-summary' },
-      `Moved ${counts.moved || 0} · Renamed ${counts.renamed || 0} · Changed ${counts.changed || 0} · New ${counts.new || 0} · Gone ${counts.gone || 0}`)
-  );
-
-  for (const c of changes) {
-    const kind = String(c.change_type || '').toLowerCase();
-    container.appendChild(
-      el('div', { class: 'change-row' },
-        el('span', { class: `change-type ${kind}` }, c.change_type),
-        el('div', { class: 'change-paths' },
-          el('div', { class: 'file-path' }, c.prev_path || '—'),
-          el('div', { class: 'file-meta' }, c.new_path || '—')
-        ),
-        el('span', { class: 'file-meta' }, `${fmtBytes(c.size)} · ${shortHash(c.hash)}`)
-      )
-    );
-  }
-}
-
-function renderManifests() {
-  const manifests = state.lastResponse?.manifests;
-  const folders = manifests?.folders || [];
-  const files = manifests?.files || [];
-  $('manifest-summary').textContent = manifests
-    ? `${folders.length} folder fingerprints · ${files.length} files`
-    : 'No manifest yet.';
-
-  const folderList = $('manifest-folders');
-  folderList.innerHTML = '';
-  const shownFolders = folders.slice(0, 80);
-  for (const f of shownFolders) {
-    folderList.appendChild(
-      el('div', { class: 'manifest-row' },
-        el('div', {},
-          el('div', { class: 'file-path' }, f.path),
-          el('div', { class: 'file-meta' }, `${f.file_count} files · ${fmtBytes(f.total_bytes)} · ${shortHash(f.folder_hash)}`)
-        )
-      )
-    );
-  }
-  if (folders.length > shownFolders.length) {
-    folderList.appendChild(el('div', { class: 'manifest-more' }, `${folders.length - shownFolders.length} more folders in export`));
-  }
-  if (!folders.length) {
-    folderList.appendChild(el('div', { class: 'empty compact' }, 'No folders yet.'));
-  }
-
-  const fileList = $('manifest-files');
-  fileList.innerHTML = '';
-  const shownFiles = files.slice(0, 120);
-  for (const f of shownFiles) {
-    fileList.appendChild(
-      el('div', { class: 'manifest-row' },
-        el('div', {},
-          el('div', { class: 'file-path' }, f.path),
-          el('div', { class: 'file-meta' }, `${fmtBytes(f.size)} · ${shortHash(f.content_hash)}`)
-        )
-      )
-    );
-  }
-  if (files.length > shownFiles.length) {
-    fileList.appendChild(el('div', { class: 'manifest-more' }, `${files.length - shownFiles.length} more files in export`));
-  }
-  if (!files.length) {
-    fileList.appendChild(el('div', { class: 'empty compact' }, 'No files yet.'));
-  }
-}
 
 function renderDupDir(d) {
   const paths = el('div', { class: 'dup-dir-paths' });
@@ -617,13 +532,19 @@ const DONUT_COLORS = [
   'hsl(0 0% 25%)',      // black accent
 ];
 
+let compositionChart = null;
+
 function renderDonut() {
   const r = state.lastResponse;
-  const svg = $('donut');
+  const canvas = $('donut');
   const center = $('donut-center');
   const legend = $('legend');
-  svg.innerHTML = '';
   legend.innerHTML = '';
+
+  if (compositionChart) {
+    compositionChart.destroy();
+    compositionChart = null;
+  }
 
   if (!r || !r.report.groups.length) {
     center.innerHTML = '<span class="donut-big">–</span><span class="donut-small">wasted</span>';
@@ -650,30 +571,52 @@ function renderDonut() {
   center.appendChild(el('span', { class: 'donut-big' }, fmtBytes(total)));
   center.appendChild(el('span', { class: 'donut-small' }, 'wasted'));
 
-  // Draw arcs as stroke-dasharray on circles. Cleaner than path arcs.
-  const cx = 60, cy = 60, radius = 44, circumference = 2 * Math.PI * radius;
-  svg.appendChild(svgEl('circle', {
-    cx, cy, r: radius, fill: 'none',
-    stroke: 'hsl(28 60% 94%)', 'stroke-width': 14,
-  }));
+  if (total === 0) return;
 
-  let offset = 0;
+  const labels = entries.map(e => e[0]);
+  const data = entries.map(e => e[1]);
+  const colors = entries.map((_, i) => DONUT_COLORS[i % DONUT_COLORS.length]);
+
+  compositionChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '75%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              let label = context.label || '';
+              if (label) label += ': ';
+              if (context.raw !== null) {
+                label += fmtBytes(context.raw);
+                const pct = (context.raw / total * 100).toFixed(1);
+                label += ` (${pct}%)`;
+              }
+              return label;
+            }
+          }
+        }
+      },
+      animation: {
+        animateScale: true,
+        animateRotate: true
+      }
+    }
+  });
+
   entries.forEach(([ext, bytes], i) => {
-    if (total === 0) return;
-    const fraction = bytes / total;
-    const dashLen = fraction * circumference;
-    const arc = svgEl('circle', {
-      cx, cy, r: radius, fill: 'none',
-      stroke: DONUT_COLORS[i % DONUT_COLORS.length],
-      'stroke-width': 14,
-      'stroke-dasharray': `${dashLen} ${circumference - dashLen}`,
-      'stroke-dashoffset': -offset,
-      class: 'donut-slice',
-    });
-    arc.appendChild(svgEl('title')).textContent = `${ext}: ${fmtBytes(bytes)} (${(fraction * 100).toFixed(1)}%)`;
-    svg.appendChild(arc);
-    offset += dashLen;
-
     legend.appendChild(
       el('li', {},
         el('span', { class: 'swatch', style: `background:${DONUT_COLORS[i % DONUT_COLORS.length]}` }),
@@ -1013,71 +956,7 @@ async function exportReport() {
   }
 }
 
-// ----------------------------- similar images --------------------------
-// Review-only perceptual matching. Visually similar != byte-identical, so this
-// never builds a quarantine plan — it only lists clusters for manual review.
 
-async function findSimilarImages() {
-  if (state.roots.length === 0) {
-    showError({ message: 'Add at least one folder first.' });
-    return;
-  }
-  const btn = $('find-similar-btn');
-  btn.disabled = true;
-  $('similar-summary').textContent = 'Scanning images…';
-  try {
-    const t = parseInt($('similar-threshold').value, 10);
-    const res = await invoke('find_similar_images', {
-      request: {
-        roots: state.roots,
-        threshold: Number.isFinite(t) ? t : 10,
-        skip_dev_dirs: $('skip-dev').checked,
-      },
-    });
-    renderSimilar(res);
-  } catch (err) {
-    showError(err);
-    $('similar-summary').textContent = 'Search failed — see logs.';
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-function renderSimilar(res) {
-  $('similar-summary').textContent =
-    `${res.clusters.length} cluster(s) · ${res.images_scanned} image(s) scanned${res.errors ? ` · ${res.errors} undecodable` : ''}`;
-  const cont = $('similar-clusters');
-  cont.innerHTML = '';
-  $('similar-empty').style.display = res.clusters.length ? 'none' : '';
-  if (!res.clusters.length) {
-    $('similar-empty').querySelector('.empty-text').textContent = res.images_scanned
-      ? 'No visually-similar images found.'
-      : 'No decodable images found in the selected folders.';
-  }
-  for (const c of res.clusters) {
-    const rows = el('div', { class: 'similar-images' });
-    for (const im of c.images) {
-      rows.appendChild(
-        el('div', { class: 'similar-row' },
-          el('div', {},
-            el('div', { class: 'file-path' }, im.path),
-            el('div', { class: 'file-meta' }, `${im.width}×${im.height} · ${fmtBytes(im.size)}`)
-          ),
-          el('button', { class: 'btn small', onClick: () => revealPath(im.path) }, 'Reveal')
-        )
-      );
-    }
-    cont.appendChild(
-      el('div', { class: 'similar-cluster' },
-        el('div', { class: 'similar-head' },
-          el('span', { class: 'dup-dir-title' }, `${c.images.length} similar images`),
-          el('span', { class: 'group-wasted' }, `distance ≤ ${c.max_distance}`)
-        ),
-        rows
-      )
-    );
-  }
-}
 
 // ----------------------------- tabs ------------------------------------
 
@@ -1086,14 +965,22 @@ const TAB_TITLES = { files: 'Files', duplicates: 'Duplicates', logs: 'Logs' };
 function setupTabs() {
   document.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-      tab.classList.add('active');
-      $(`panel-${tab.dataset.tab}`).classList.add('active');
-      // The Export button lives inside the Logs panel, so it shows only when
-      // Logs is the active tab and is hidden otherwise — no extra JS needed.
-      const title = document.querySelector('.content-title');
-      if (title) title.textContent = TAB_TITLES[tab.dataset.tab] || 'Results';
+      const updateDOM = () => {
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
+        tab.classList.add('active');
+        $(`panel-${tab.dataset.tab}`).classList.add('active');
+        // The Export button lives inside the Logs panel, so it shows only when
+        // Logs is the active tab and is hidden otherwise — no extra JS needed.
+        const title = document.querySelector('.content-title');
+        if (title) title.textContent = TAB_TITLES[tab.dataset.tab] || 'Results';
+      };
+
+      if (!document.startViewTransition) {
+        updateDOM();
+      } else {
+        document.startViewTransition(updateDOM);
+      }
     });
   });
 }
@@ -1175,7 +1062,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
+    window.__TAURI__.event.listen('tauri://drag-enter', () => {
+      document.body.classList.add('drag-over');
+    });
+    window.__TAURI__.event.listen('tauri://drag-leave', () => {
+      document.body.classList.remove('drag-over');
+    });
     window.__TAURI__.event.listen('tauri://drag-drop', (ev) => {
+      document.body.classList.remove('drag-over');
       const paths = ev.payload?.paths || [];
       let added = false;
       for (const p of paths) {

@@ -13,7 +13,6 @@ use crate::error::AppError;
 use crate::logs::LogEntry;
 use crate::memory::{FolderRow, MemoryStats, ScanRow};
 use crate::quarantine::{self, ApplyResult, UndoResult};
-use crate::reports::{self, ChangeType, FileChange, ScanManifests};
 use crate::scanner::{self, ScanCounters};
 use crate::state::{AppState, LastResults};
 
@@ -47,8 +46,6 @@ pub struct ScanResponse {
     pub counters: ScanCounters,
     pub scan_id: i64,
     pub dry_run: bool,
-    pub changes: Vec<FileChange>,
-    pub manifests: ScanManifests,
 }
 
 #[tauri::command]
@@ -70,7 +67,9 @@ pub async fn pick_folders(app: AppHandle) -> Result<Vec<String>, AppError> {
                 .unwrap_or_default();
             let _ = tx.send(paths);
         });
-    Ok(rx.recv_timeout(std::time::Duration::from_secs(600)).unwrap_or_default())
+    Ok(rx
+        .recv_timeout(std::time::Duration::from_secs(600))
+        .unwrap_or_default())
 }
 
 #[tauri::command]
@@ -212,8 +211,7 @@ pub async fn run_scan(
         report.groups.len() as i64,
         report.total_wasted_bytes,
     )?;
-    let changes = state.memory.scan_changes(scan_id)?;
-    state.logs.info(change_summary_log_line(&changes));
+
     state.logs.info(format!(
         "cache — hits: {}, misses: {}, stale ignored: {}, new hashes saved: {}, \
          moved-file matches: {}, hash errors: {}",
@@ -234,7 +232,6 @@ pub async fn run_scan(
         counters.videos,
         counters.unsupported_files,
     ));
-    let manifests = reports::build_manifests(&files);
 
     if dry_run {
         state.logs.dry(format!(
@@ -257,8 +254,6 @@ pub async fn run_scan(
         roots: roots.clone(),
         mode: mode.to_string(),
         scan_id,
-        changes: changes.clone(),
-        manifests: manifests.clone(),
     });
     *state.current_plan.lock() = dedupe::default_plan(&report);
 
@@ -269,21 +264,7 @@ pub async fn run_scan(
         counters,
         scan_id,
         dry_run,
-        changes,
-        manifests,
     })
-}
-
-pub fn change_summary_log_line(changes: &[FileChange]) -> String {
-    let count = |t: ChangeType| changes.iter().filter(|c| c.change_type == t).count();
-    format!(
-        "rescan change summary — moved: {}, renamed: {}, changed: {}, new: {}, gone: {}",
-        count(ChangeType::Moved),
-        count(ChangeType::Renamed),
-        count(ChangeType::Changed),
-        count(ChangeType::New),
-        count(ChangeType::Gone),
-    )
 }
 
 #[tauri::command]
@@ -302,8 +283,6 @@ pub async fn get_last_results(
         counters: last.counters.clone(),
         scan_id: last.scan_id,
         dry_run: last.mode == "dry",
-        changes: last.changes.clone(),
-        manifests: last.manifests.clone(),
     }))
 }
 
@@ -523,8 +502,6 @@ pub async fn export_report(
                 "roots": last.roots.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>(),
                 "scan_id": last.scan_id,
                 "report": last.report,
-                "changes": last.changes,
-                "manifests": last.manifests,
             }))?;
             std::fs::write(&path, &bytes)?;
             state
@@ -540,9 +517,6 @@ pub async fn export_report(
             let path = state.data.exports_dir.join(format!("Rusty-Scan-{ts}"));
             std::fs::create_dir_all(&path)?;
             let report_path = path.join("Rusty-Report.csv");
-            let changes_path = path.join("Rusty-Changes.csv");
-            let folders_path = path.join("Rusty-Folders.csv");
-            let files_path = path.join("Rusty-Files.csv");
             let mut out = String::from(
                 "hash,media_kind,group_size_bytes,copies,wasted_bytes,path,normalized_path,source_root\n",
             );
@@ -563,17 +537,8 @@ pub async fn export_report(
             }
             std::fs::write(&report_path, out.as_bytes())?;
 
-            let changes_csv = changes_csv(&last.changes);
-            std::fs::write(&changes_path, changes_csv.as_bytes())?;
-            let folders_csv = folders_csv(&last.manifests);
-            std::fs::write(&folders_path, folders_csv.as_bytes())?;
-            let files_csv = files_csv(&last.manifests);
-            std::fs::write(&files_path, files_csv.as_bytes())?;
-
-            let bytes_written = out.len() + changes_csv.len() + folders_csv.len() + files_csv.len();
-            state
-                .logs
-                .info(format!("exported CSV bundle: {}", path.display()));
+            let bytes_written = out.len();
+            state.logs.info(format!("exported CSV: {}", path.display()));
             Ok(ExportResult {
                 path: path.to_string_lossy().into_owned(),
                 format: "csv".into(),
@@ -606,58 +571,11 @@ pub async fn data_paths(state: State<'_, AppState>) -> Result<DataPaths, AppErro
     })
 }
 
-#[derive(Deserialize)]
-pub struct SimilarImagesRequest {
-    pub roots: Vec<String>,
-    #[serde(default)]
-    pub threshold: Option<u32>, // max Hamming distance (0..=64), default 10
-    #[serde(default)]
-    pub skip_dev_dirs: Option<bool>,
-}
-
 /// Signal an in-progress scan to stop. Safe to call at any time.
 #[tauri::command]
 pub async fn cancel_scan(state: State<'_, AppState>) -> Result<(), AppError> {
     state.cancel.store(true, Ordering::SeqCst);
     Ok(())
-}
-
-/// Review-only: find visually similar images (perceptual dHash + clustering).
-/// These are NOT byte-identical and never enter the quarantine plan.
-#[tauri::command]
-pub async fn find_similar_images(
-    state: State<'_, AppState>,
-    request: SimilarImagesRequest,
-) -> Result<crate::perceptual::SimilarImagesResult, AppError> {
-    if request.roots.is_empty() {
-        return Err(AppError::BadInput("add at least one folder first".into()));
-    }
-    if state.scan_running.load(Ordering::SeqCst) {
-        return Err(AppError::BadInput(
-            "a scan is already running; wait for it to finish".into(),
-        ));
-    }
-    let roots: Vec<PathBuf> = request.roots.iter().map(PathBuf::from).collect();
-    let threshold = request.threshold.unwrap_or(10).min(64);
-    let skip = request.skip_dev_dirs.unwrap_or(true);
-    let logs = state.logs.clone();
-    logs.info(format!(
-        "=== SIMILAR IMAGES — threshold {threshold}, roots: {:?} ===",
-        request.roots
-    ));
-    let logs_for_task = logs.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        crate::perceptual::find_similar(&roots, threshold, skip, &logs_for_task)
-    })
-    .await
-    .map_err(|e| AppError::BadInput(format!("similar-images task error: {e}")))?;
-    logs.info(format!(
-        "perceptual: {} cluster(s) from {} image(s), {} undecodable",
-        result.clusters.len(),
-        result.images_scanned,
-        result.errors
-    ));
-    Ok(result)
 }
 
 #[tauri::command]
@@ -676,51 +594,4 @@ fn csv_escape(s: &str) -> String {
     } else {
         s.to_string()
     }
-}
-
-fn changes_csv(changes: &[FileChange]) -> String {
-    let mut out = String::from("change_type,hash,file_name,size,prev_path,new_path,source_root\n");
-    for change in changes {
-        out.push_str(&format!(
-            "{},{},{},{},{},{},{}\n",
-            change.change_type.as_str(),
-            csv_escape(&change.hash),
-            csv_escape(&change.file_name),
-            change.size,
-            csv_escape(&change.prev_path),
-            csv_escape(&change.new_path),
-            csv_escape(&change.source_root)
-        ));
-    }
-    out
-}
-
-fn folders_csv(manifests: &ScanManifests) -> String {
-    let mut out = String::from("folder_path,source_root,file_count,total_bytes,folder_hash\n");
-    for folder in &manifests.folders {
-        out.push_str(&format!(
-            "{},{},{},{},{}\n",
-            csv_escape(&folder.path),
-            csv_escape(&folder.source_root),
-            folder.file_count,
-            folder.total_bytes,
-            csv_escape(&folder.folder_hash)
-        ));
-    }
-    out
-}
-
-fn files_csv(manifests: &ScanManifests) -> String {
-    let mut out = String::from("file_path,normalized_path,source_root,size,content_hash\n");
-    for file in &manifests.files {
-        out.push_str(&format!(
-            "{},{},{},{},{}\n",
-            csv_escape(&file.path),
-            csv_escape(&file.normalized_path),
-            csv_escape(&file.source_root),
-            file.size,
-            csv_escape(&file.content_hash)
-        ));
-    }
-    out
 }

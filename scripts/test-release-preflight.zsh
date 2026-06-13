@@ -6,6 +6,7 @@ preflight="$repo_root/scripts/release-preflight.zsh"
 release_build="$repo_root/scripts/release-build.zsh"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/rusty-release-preflight.XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT
+version="$(sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$repo_root/src-tauri/tauri.conf.json" | head -n 1)"
 
 run_expect_pass() {
     local name="$1"
@@ -43,11 +44,11 @@ cat >"$good_log" <<EOF
 Rusty release build
 Repository: $repo_root
 Log: $good_log
-Compiling rusty v0.2.0 ($repo_root/src-tauri)
+Compiling rusty v$version ($repo_root/src-tauri)
 Built application at: $repo_root/target/release/rusty
 Finished 2 bundles at:
     $repo_root/target/release/bundle/macos/Rusty.app
-    $repo_root/target/release/bundle/dmg/Rusty_0.2.0_aarch64.dmg
+    $repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg
 EOF
 
 wrong_root_log="$tmp_dir/wrong-root.log"
@@ -55,11 +56,11 @@ cat >"$wrong_root_log" <<EOF
 Rusty release build
 Repository: /Users/home/Workspace/OtherRusty
 Log: $wrong_root_log
-Compiling rusty v0.2.0 (/Users/home/Workspace/OtherRusty/src-tauri)
+Compiling rusty v$version (/Users/home/Workspace/OtherRusty/src-tauri)
 Built application at: /Users/home/Workspace/OtherRusty/target/release/rusty
 Finished 2 bundles at:
     /Users/home/Workspace/OtherRusty/target/release/bundle/macos/Rusty.app
-    /Users/home/Workspace/OtherRusty/target/release/bundle/dmg/Rusty_0.2.0_aarch64.dmg
+    /Users/home/Workspace/OtherRusty/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg
 EOF
 
 portable_root="$tmp_dir/Rusty"

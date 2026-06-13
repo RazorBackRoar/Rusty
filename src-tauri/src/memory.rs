@@ -22,7 +22,6 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 
 use crate::error::{AppError, AppResult};
-use crate::reports::{self, FileChange, ScanFileSnapshot};
 
 const SCHEMA_VERSION: i32 = 3;
 
@@ -591,48 +590,6 @@ impl MemoryBank {
             })?
             .collect::<Result<Vec<_>, _>>()?;
         Ok(rows)
-    }
-
-    pub fn scan_files(&self, scan_id: i64) -> AppResult<Vec<ScanFileSnapshot>> {
-        let conn = self.inner.lock();
-        let mut stmt = conn.prepare(
-            "SELECT hash, path, normalized_path, file_name, source_root, size, modified_ns
-             FROM scan_files WHERE scan_id = ?1 ORDER BY normalized_path",
-        )?;
-        let rows = stmt
-            .query_map(params![scan_id], |r| {
-                Ok(ScanFileSnapshot {
-                    hash: r.get(0)?,
-                    path: r.get(1)?,
-                    normalized_path: r.get(2)?,
-                    file_name: r.get(3)?,
-                    source_root: r.get(4)?,
-                    size: r.get(5)?,
-                    modified_ns: r.get(6)?,
-                })
-            })?
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(rows)
-    }
-
-    pub fn scan_changes(&self, scan_id: i64) -> AppResult<Vec<FileChange>> {
-        let prev_id = {
-            let conn = self.inner.lock();
-            conn.query_row(
-                "SELECT id FROM scans
-                 WHERE id < ?1 AND ended_ts IS NOT NULL
-                 ORDER BY id DESC LIMIT 1",
-                params![scan_id],
-                |r| r.get::<_, i64>(0),
-            )
-            .optional()?
-        };
-        let Some(prev_id) = prev_id else {
-            return Ok(Vec::new());
-        };
-        let prev = self.scan_files(prev_id)?;
-        let curr = self.scan_files(scan_id)?;
-        Ok(reports::compute_changes(&prev, &curr))
     }
 
     pub fn stats(&self, db_path: &Path) -> AppResult<MemoryStats> {

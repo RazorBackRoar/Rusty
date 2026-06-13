@@ -5,9 +5,7 @@ pub mod error;
 pub mod logs;
 pub mod memory;
 pub mod paths;
-pub mod perceptual;
 pub mod quarantine;
-pub mod reports;
 pub mod scanner;
 pub mod state;
 
@@ -43,7 +41,6 @@ pub fn run() {
             commands::data_paths,
             commands::reveal_path,
             commands::cancel_scan,
-            commands::find_similar_images,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

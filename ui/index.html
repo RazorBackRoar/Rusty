@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rusty</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="chart.umd.js"></script>
     <link rel="stylesheet" href="app.css" />
   </head>
   <body>
@@ -73,8 +77,8 @@
 
         <section class="panel">
           <div class="panel-head"><h2>Composition</h2></div>
-          <div class="donut-wrap">
-            <svg class="donut" id="donut" viewBox="0 0 120 120" aria-label="Wasted bytes by file type"></svg>
+          <div class="donut-wrap" style="position: relative; width: 100%; aspect-ratio: 1; padding: 10px;">
+            <canvas id="donut"></canvas>
             <div class="donut-center" id="donut-center">
               <span class="donut-big">–</span>
               <span class="donut-small">wasted</span>

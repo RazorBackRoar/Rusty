@@ -11,7 +11,7 @@ use crate::data_dir::DataDir;
 use crate::dedupe::{DedupeReport, PlanEntry};
 use crate::logs::LogSink;
 use crate::memory::MemoryBank;
-use crate::reports::{FileChange, ScanManifests};
+
 use crate::scanner::ScanCounters;
 
 pub struct AppState {
@@ -32,8 +32,6 @@ pub struct LastResults {
     pub roots: Vec<PathBuf>,
     pub mode: String,
     pub scan_id: i64,
-    pub changes: Vec<FileChange>,
-    pub manifests: ScanManifests,
 }
 
 pub fn setup_app_state(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
@@ -65,5 +63,16 @@ pub fn setup_app_state(app: &mut tauri::App) -> Result<(), Box<dyn std::error::E
         last_results: Mutex::new(None),
         current_plan: Mutex::new(Vec::new()),
     });
+
+    #[cfg(target_os = "macos")]
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window_vibrancy::apply_vibrancy(
+            &window,
+            window_vibrancy::NSVisualEffectMaterial::HudWindow,
+            None,
+            None,
+        );
+    }
+
     Ok(())
 }

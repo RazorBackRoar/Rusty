@@ -101,7 +101,14 @@ check_release_config() {
     ! grep -Eq 'RustyDups|rustydups' "$repo_root/src-tauri/tauri.conf.json" \
         || fail "tauri.conf.json contains stale RustyDups/rustydups text"
 
-    uv run --no-project --python 3.14 python - "$repo_root/src-tauri/tauri.conf.json" <<'PY' \
+    local -a python_runner
+    if command -v uv >/dev/null 2>&1; then
+        python_runner=(uv run --no-project --python 3.14 python)
+    else
+        python_runner=(python3)
+    fi
+
+    "${python_runner[@]}" - "$repo_root/src-tauri/tauri.conf.json" <<'PY' \
         || fail "tauri.conf.json does not match the locked Rusty bundle/DMG contract"
 import json
 import sys

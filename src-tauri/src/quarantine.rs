@@ -446,7 +446,10 @@ fn move_with_fallback(src: &Path, dst: &Path) -> std::io::Result<()> {
             #[cfg(not(unix))]
             let is_cross_device = false;
             if is_cross_device {
-                fs::copy(src, dst)?;
+                if let Err(e) = fs::copy(src, dst) {
+                    let _ = fs::remove_file(dst);
+                    return Err(e);
+                }
                 fs::remove_file(src)?;
                 Ok(())
             } else {

@@ -156,10 +156,15 @@ pub fn find_similar(
         .collect();
 
     // Union-find: connect every pair within the distance threshold.
+    // If there are too many images, limit comparisons to prevent O(n^2) freeze.
     let n = fps.len();
+    if n > 20_000 {
+        logs.info("Too many images for full clustering; limiting to first 20,000 for similarity search.");
+    }
+    let n_limit = n.min(20_000);
     let mut parent: Vec<usize> = (0..n).collect();
-    for i in 0..n {
-        for j in (i + 1)..n {
+    for i in 0..n_limit {
+        for j in (i + 1)..n_limit {
             if (fps[i].hash ^ fps[j].hash).count_ones() <= threshold {
                 let a = uf_find(&mut parent, i);
                 let b = uf_find(&mut parent, j);
@@ -211,7 +216,7 @@ pub fn find_similar(
         })
         .collect();
 
-    clusters.sort_by(|a, b| b.images.len().cmp(&a.images.len()));
+    clusters.sort_by_key(|b| std::cmp::Reverse(b.images.len()));
 
     SimilarImagesResult {
         clusters,

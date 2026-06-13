@@ -506,16 +506,18 @@ impl MemoryBank {
 
     pub fn delete_file_by_path(&self, normalized_path: &str) -> AppResult<()> {
         let conn = self.inner.lock();
+        let tx = conn.unchecked_transaction()?;
         // Remove from scan_files first so the next diff emits GONE instead of
         // treating the quarantine copy as a MOVED version of this file.
-        conn.execute(
+        tx.execute(
             "DELETE FROM scan_files WHERE normalized_path = ?1",
             params![normalized_path],
         )?;
-        conn.execute(
+        tx.execute(
             "DELETE FROM files WHERE normalized_path = ?1",
             params![normalized_path],
         )?;
+        tx.commit()?;
         Ok(())
     }
 

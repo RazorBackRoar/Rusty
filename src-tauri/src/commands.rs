@@ -70,7 +70,7 @@ pub async fn pick_folders(app: AppHandle) -> Result<Vec<String>, AppError> {
                 .unwrap_or_default();
             let _ = tx.send(paths);
         });
-    Ok(rx.recv().unwrap_or_default())
+    Ok(rx.recv_timeout(std::time::Duration::from_secs(600)).unwrap_or_default())
 }
 
 #[tauri::command]

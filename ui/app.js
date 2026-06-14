@@ -210,10 +210,10 @@ async function runScan() {
     $('loading-veil').hidden = true;
     btn.classList.remove('scanning');
     if (scanSucceeded) {
-      btn.classList.add('success');
+      btn.classList.add('danger');
       btn.textContent = 'Done ✓';
       setTimeout(() => {
-        btn.classList.remove('success');
+        btn.classList.remove('danger');
         btn.textContent = 'Scan';
         btn.disabled = false;
       }, 2500);
@@ -227,8 +227,11 @@ async function runScan() {
 
 function setStatus(text, running) {
   const s = $('status');
+  if (!s) return;
   s.textContent = text;
+  const done = !running && typeof text === 'string' && text.startsWith('Done');
   s.classList.toggle('running', !!running);
+  s.classList.toggle('done', done);
 }
 
 function isCancelError(err) {

@@ -10,16 +10,17 @@
   --accent-muted:   hsla(24 100% 55% / 0.15);
   --accent-border:  hsla(24 100% 55% / 0.3);
 
-  /* Backgrounds */
-  --bg-top:         hsl(220 15% 12%);
-  --bg-bot:         hsl(220 18% 7%);
-  --surface:        hsla(220 12% 16% / 0.55);
-  --surface-hover:  hsla(220 12% 20% / 0.65);
-  --surface-solid:  hsl(220 15% 15%);
-  
+  /* Backgrounds — deep navy blue */
+  --bg-top:         hsl(222 42% 11%);
+  --bg-bot:         hsl(225 48% 5%);
+  --surface:        hsla(222 38% 13% / 0.78);
+  --surface-hover:  hsla(222 34% 19% / 0.82);
+  --surface-solid:  hsl(222 38% 12%);
+
   /* Borders */
-  --border:         hsla(0 0% 100% / 0.1);
-  --border-light:   hsla(0 0% 100% / 0.05);
+  --border:         hsla(210 40% 100% / 0.1);
+  --border-light:   hsla(210 40% 100% / 0.05);
+  --border-accent:  hsla(24 100% 55% / 0.95);
 
   /* Text */
   --text:           #ffffff;
@@ -60,6 +61,10 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  background: linear-gradient(160deg, var(--bg-top), var(--bg-bot));
+}
+
 body { 
   display: flex; 
   flex-direction: column; 
@@ -80,7 +85,7 @@ h3 { font-size: 15px; }
   justify-content: space-between;
   gap: 16px;
   padding: 14px 22px;
-  background: hsla(220 15% 12% / 0.7);
+  background: hsla(222 42% 10% / 0.82);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -99,6 +104,8 @@ h3 { font-size: 15px; }
   box-shadow: var(--shadow-glow);
 }
 
+.toolbar-status { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; overflow: hidden; }
+.toolbar-status .status { max-width: 360px; }
 .toolbar-right { display: flex; align-items: center; gap: 14px; }
 
 .mode-pill {
@@ -190,9 +197,10 @@ h3 { font-size: 15px; }
   background: var(--surface);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-accent);
   border-radius: var(--r);
   box-shadow: var(--shadow-card);
+  overflow-x: hidden;
   overflow-y: auto;
   overflow-anchor: none;
   min-height: 0;
@@ -278,7 +286,7 @@ h3 { font-size: 15px; }
   background: var(--surface);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-accent);
   border-radius: var(--r);
   box-shadow: var(--shadow-card);
   padding: 28px 30px 20px;
@@ -315,7 +323,7 @@ h3 { font-size: 15px; }
 .tab.active::after { transform: scaleX(1); }
 
 .panels { position: relative; flex: 1 1 auto; min-height: 0; }
-.tab-panel { position: absolute; inset: 0; overflow: auto; display: none; padding: 20px 4px 6px; }
+.tab-panel { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; display: none; padding: 20px 4px 6px; }
 .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
 
 @keyframes fadeIn {
@@ -346,11 +354,11 @@ h3 { font-size: 15px; }
 .empty-mark {
   font-size: 48px;
   line-height: 1;
-  color: var(--accent-muted);
+  color: var(--accent);
   margin-bottom: 8px;
 }
 .empty-title { font-size: 16px; font-weight: 600; color: var(--text); }
-.empty-text { font-size: 13px; color: var(--faint); max-width: 320px; line-height: 1.6; }
+.empty-text { font-size: 14px; color: hsla(0 0% 100% / 0.82); max-width: 340px; line-height: 1.6; }
 
 .loading-veil {
   position: absolute;
@@ -442,9 +450,10 @@ h3 { font-size: 15px; }
 
 .row { display: flex; gap: 12px; align-items: center; }
 .row.right { justify-content: flex-end; }
+.row.centered { justify-content: center; }
 
 /* remembered folders */
-.remembered-toggle { margin-top: 10px; }
+.remembered-toggle { margin: 10px auto 0; display: flex; }
 .remembered {
   margin-top: 10px; border: 1px solid var(--border); border-radius: var(--r-sm);
   background: hsla(0 0% 0% / 0.2); max-height: 230px; overflow-y: auto;
@@ -678,6 +687,9 @@ h3 { font-size: 15px; }
   border: 1px solid var(--border); border-radius: var(--r-sm);
   background: hsla(0 0% 0% / 0.2); padding: 18px 20px; margin-bottom: 20px;
 }
+/* Hide the result containers until they actually hold content, so the
+   empty "No scan yet" panel doesn't render stray boxes or overflow. */
+.scan-summary:empty, .files-head:empty { display: none; }
 .summary-title { font-size: 12.5px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--muted); margin-bottom: 12px; }
 .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -730,14 +742,7 @@ h3 { font-size: 15px; }
 .legend .legend-value { color: var(--muted); font-weight: 500; }
 
 /* ───────────────────────────── status bar ───────────────────────── */
-.statusbar {
-  flex: 0 0 auto;
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 12px 24px; background: hsla(220 15% 10% / 0.85); backdrop-filter: blur(20px); font-size: 13px;
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -2px 10px hsla(0 0% 0% / 0.2);
-  z-index: 10;
-}
+.statusbar { display: none; }
 .status-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 auto; }
 .status {
   position: relative; padding-left: 20px; font-weight: 600; color: var(--text);
@@ -745,11 +750,13 @@ h3 { font-size: 15px; }
 }
 .status::before {
   content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: 10px; height: 10px; border-radius: 50%; background: var(--faint);
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
   box-shadow: inset 0 1px 2px hsla(0 0% 0% / 0.5);
 }
-.status.running { color: var(--accent); }
-.status.running::before { background: var(--accent); animation: pulse 1.5s ease-in-out infinite; box-shadow: var(--shadow-glow); }
+.status.running { color: var(--success); }
+.status.running::before { background: var(--success); animation: pulse 1.5s ease-in-out infinite; box-shadow: 0 0 12px var(--success-muted); }
+.status.done { color: var(--danger); }
+.status.done::before { background: var(--danger); box-shadow: 0 0 12px var(--danger-muted); }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); } 50% { opacity: 0.6; transform: translateY(-50%) scale(0.8); } }
 .status-progress {
   display: flex;
@@ -819,14 +826,20 @@ h3 { font-size: 15px; }
 .confirm-input:focus { outline: none; border-color: var(--accent); box-shadow: var(--shadow-glow); background: hsla(0 0% 0% / 0.6); }
 
 /* ───────────────────────────── scrollbars ───────────────────────── */
-* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-::-webkit-scrollbar { width: 12px; height: 12px; }
+* { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsla(0 0% 100% / 0.15); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
-::-webkit-scrollbar-thumb:hover { background: hsla(0 0% 100% / 0.3); background-clip: content-box; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
-.sidebar { scrollbar-width: none; }
-.sidebar::-webkit-scrollbar { width: 0; height: 0; display: none; }
+/* Sidebar: always reserve the 6px gutter so the layout never shifts or
+   compresses when the cursor enters. The orange thumb is invisible until
+   hover, so the panel still looks clean on first open. */
+.sidebar { scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: transparent; }
+.sidebar:hover { scrollbar-color: var(--accent) transparent; }
+.sidebar:hover::-webkit-scrollbar-thumb { background: var(--accent); }
 
 ::selection { background: var(--accent-muted); color: #fff; }
 body.drag-over::after { content: 'Drop Folders Here'; position: fixed; inset: 0; background: hsla(24, 100%, 55%, 0.1); border: 2px dashed var(--accent); z-index: 9999; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; color: var(--accent); pointer-events: none; backdrop-filter: blur(4px); }

@@ -20,6 +20,10 @@
           <span class="tagline">Safe duplicate finder</span>
         </div>
       </div>
+      <div class="toolbar-status">
+        <span class="status" id="status">Idle</span>
+        <button class="btn small undo-btn" id="undo-btn" type="button" hidden>↶ Undo last quarantine</button>
+      </div>
       <div class="toolbar-right">
         <div class="mode-pill dry" id="mode-seg" role="group" aria-label="Run mode">
           <div class="mode-pill-thumb" aria-hidden="true"></div>
@@ -38,7 +42,7 @@
         <section class="panel">
           <div class="panel-head"><h2>Sources</h2></div>
           <ul class="root-list" id="root-list" aria-label="Selected folders"></ul>
-          <div class="row">
+          <div class="row centered">
             <button class="btn primary small" id="pick-folder">+ Add Folder</button>
             <button class="btn small" id="clear-folders">Clear</button>
           </div>
@@ -127,7 +131,7 @@
             <div class="empty" id="files-empty">
               <span class="empty-mark">⌕</span>
               <span class="empty-title">No scan yet</span>
-              <span class="empty-text">Add folders in the sidebar, then press Scan.</span>
+              <span class="empty-text">Drop or select folders in the sidebar, then press Scan.</span>
             </div>
             <div class="scan-summary" id="scan-summary"></div>
             <div class="files-head" id="files-head"></div>
@@ -138,7 +142,7 @@
             <div class="empty" id="dups-empty">
               <span class="empty-mark">⌕</span>
               <span class="empty-title">No duplicates yet</span>
-              <span class="empty-text">Add folders in the sidebar, then press Scan.</span>
+              <span class="empty-text">Drop or select folders in the sidebar, then press Scan.</span>
             </div>
             <div class="groups" id="duplicates"></div>
           </div>
@@ -168,16 +172,13 @@
     </main>
 
     <!-- ───────────────────────── Status bar ────────────────────── -->
-    <footer class="statusbar">
-      <div class="status-left">
-        <span class="status" id="status">Idle</span>
-        <div class="status-progress" id="status-progress" hidden>
-          <div class="status-progress-track">
-            <div class="status-progress-fill" id="status-progress-fill"></div>
-          </div>
-          <span class="status-progress-pct" id="status-progress-pct">0%</span>
+    <!-- Hidden status sinks kept for JS (progress shown via the scan overlay) -->
+    <footer class="statusbar" hidden>
+      <div class="status-progress" id="status-progress" hidden>
+        <div class="status-progress-track">
+          <div class="status-progress-fill" id="status-progress-fill"></div>
         </div>
-        <button class="btn small undo-btn" id="undo-btn" type="button" hidden>↶ Undo last quarantine</button>
+        <span class="status-progress-pct" id="status-progress-pct">0%</span>
       </div>
       <div class="counters" id="counters"></div>
     </footer>

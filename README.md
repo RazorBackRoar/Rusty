@@ -1,5 +1,11 @@
 # Rusty
 
+<!-- Workspace Health Layer -->
+![Status](https://img.shields.io/badge/status-active-green)
+![Stack](https://img.shields.io/badge/rust-tauri-green)
+![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-green)
+![Build](https://img.shields.io/badge/build-deferred-gray)
+
 A safe, native macOS **duplicate photo & video finder**. Tauri frontend, Rust
 backend, with a persistent hash cache so re-scanning the same folders (or an
 external SSD) is fast and a file's identity follows it as it moves or is renamed.

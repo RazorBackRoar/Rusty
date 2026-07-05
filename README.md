@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/badge/version-0.2.1-blue?style=for-the-badge)](Cargo.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-2021-e8710a?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![Tauri](https://img.shields.io/badge/Tauri-2-f5c518?style=for-the-badge&logo=tauri&logoColor=black)](https://tauri.app/)
+[![Tauri](https://img.shields.io/badge/Tauri-2-f5c518?style=for-the-badge&logo=tauri&logoColor=white&labelColor=f5c518)](https://tauri.app/)
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->

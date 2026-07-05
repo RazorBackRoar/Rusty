@@ -1,11 +1,11 @@
 # Rusty
 
-[![CI](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](Cargo.toml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
-[![Rust](https://img.shields.io/badge/Rust-2021-orange.svg)](https://www.rust-lang.org/)
-[![Tauri](https://img.shields.io/badge/Tauri-2-blue.svg)](https://tauri.app/)
+[![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Rusty/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue?style=for-the-badge)](Cargo.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-2021-e8710a?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-2-f5c518?style=for-the-badge&logo=tauri&logoColor=black)](https://tauri.app/)
+[![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->
 ![Status](https://img.shields.io/badge/status-active-green)

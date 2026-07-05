@@ -1,10 +1,19 @@
 # Rusty
 
+[![CI](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](Cargo.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](Cargo.toml)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
+[![Rust](https://img.shields.io/badge/Rust-2021-orange.svg)](https://www.rust-lang.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-2-blue.svg)](https://tauri.app/)
+
 <!-- Workspace Health Layer -->
 ![Status](https://img.shields.io/badge/status-active-green)
 ![Stack](https://img.shields.io/badge/rust-tauri-green)
 ![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-green)
-![Build](https://img.shields.io/badge/build-deferred-gray)
+![Tests](https://img.shields.io/badge/tests-present-green)
+
+> **TL;DR:** Safe, native macOS duplicate photo and video finder. Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
 
 A safe, native macOS **duplicate photo & video finder**. Tauri frontend, Rust
 backend, with a persistent hash cache so re-scanning the same folders (or an
@@ -388,6 +397,12 @@ Bundles land at:
 target/release/bundle/macos/Rusty.app
 target/release/bundle/dmg/Rusty_0.2.1_aarch64.dmg
 ```
+
+### Install from release
+
+1. Download the latest `.dmg` from [Releases](https://github.com/RazorBackRoar/Rusty/releases)
+2. Open the DMG and drag `Rusty.app` to `/Applications`
+3. First launch — right-click → **Open** if Gatekeeper blocks the ad-hoc signed build
 
 Each release run writes a timestamped log under `build-logs/`.
 

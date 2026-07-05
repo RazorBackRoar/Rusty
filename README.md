@@ -8,10 +8,8 @@
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->
-![Status](https://img.shields.io/badge/status-active-green)
-![Stack](https://img.shields.io/badge/rust-tauri-green)
-![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-green)
-![Tests](https://img.shields.io/badge/tests-present-green)
+[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
+[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
 
 > **TL;DR:** Safe, native macOS duplicate photo and video finder. Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
 

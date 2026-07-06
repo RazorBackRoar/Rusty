@@ -210,10 +210,10 @@ async function runScan() {
     $('loading-veil').hidden = true;
     btn.classList.remove('scanning');
     if (scanSucceeded) {
-      btn.classList.add('danger');
+      btn.classList.add('success');
       btn.textContent = 'Done ✓';
       setTimeout(() => {
-        btn.classList.remove('danger');
+        btn.classList.remove('success');
         btn.textContent = 'Scan';
         btn.disabled = false;
       }, 2500);

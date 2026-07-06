@@ -3110,7 +3110,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tempfile",
- "thiserror 1.0.69",
+ "thiserror 2.0.18",
  "unicode-normalization",
  "uuid",
  "window-vibrancy 0.7.1",

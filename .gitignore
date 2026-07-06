@@ -23,6 +23,7 @@ build-logs/
 # Editor scratch
 *.swp
 .idea/
+.claude/
 
 # Old CLI scripts kept for reference (huge text guides, legacy SQLite, etc.)
 # Comment out if you actually want these tracked.

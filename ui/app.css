@@ -9,7 +9,9 @@
   --accent:         #c4711a;                     /* orange — brand, Dry mode */
   --accent-hover:   #d08028;
   --accent-muted:   hsla(28 58% 44% / 0.14);
-  --accent-border:  hsla(28 58% 44% / 0.28);
+  --accent-border:  hsla(28 86% 58% / 0.5);
+  --accent-edge:    hsla(28 86% 58% / 0.9);
+  --accent-frame:   hsla(28 86% 58% / 0.72);
 
   --blue:           #6b8de0;                     /* primary actions — muted brand blue */
   --blue-hover:     #7f9de6;
@@ -81,6 +83,19 @@ body {
   cursor: default;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  border: 3px solid var(--accent-frame);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 0 0 1px hsla(28 86% 58% / 0.24),
+    inset 0 0 32px hsla(28 86% 58% / 0.2);
+}
+
 /* Content the user should be able to copy */
 input, textarea { user-select: text; -webkit-user-select: text; }
 .logs, .file-path, .root-path, .remembered-path, .path-value,
@@ -109,8 +124,8 @@ h3 { font-size: 15px; }
   background: hsla(225 8% 11% / 0.85);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border-bottom: 1px solid hsla(0 0% 0% / 0.4);
-  box-shadow: inset 0 -0.5px 0 var(--border-light);
+  border-bottom: 2px solid var(--accent-frame);
+  box-shadow: inset 0 -1px 0 hsla(28 86% 58% / 0.28);
   z-index: 10;
 }
 .brand {
@@ -131,7 +146,8 @@ h3 { font-size: 15px; }
   flex-shrink: 0;
   object-fit: contain;
   border-radius: 7px;
-  box-shadow: 0 1px 3px hsla(0 0% 0% / 0.4);
+  border: 2px solid var(--accent-edge);
+  box-shadow: 0 1px 3px hsla(0 0% 0% / 0.4), 0 0 0 2px hsla(28 86% 58% / 0.2);
 }
 
 .toolbar-status { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; overflow: hidden; }
@@ -145,7 +161,7 @@ h3 { font-size: 15px; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: hsla(0 0% 0% / 0.28);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--accent-border);
   border-radius: 7px;
   padding: 2px;
   user-select: none;
@@ -205,6 +221,17 @@ h3 { font-size: 15px; }
   position: relative;
 }
 
+.workspace::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: 5;
+  pointer-events: none;
+  border: 2px solid var(--accent-frame);
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px hsla(28 86% 58% / 0.16), 0 0 22px hsla(28 86% 58% / 0.14);
+}
+
 .sidebar { grid-column: 1; grid-row: 1; }
 .content { grid-column: 2; grid-row: 1; }
 
@@ -221,9 +248,9 @@ h3 { font-size: 15px; }
   background: var(--surface);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-light);
+  border: 2px solid var(--accent-frame);
   border-radius: var(--r);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 0 0 1px hsla(28 86% 58% / 0.1), var(--shadow-card);
   overflow-x: hidden;
   overflow-y: auto;
   overflow-anchor: none;
@@ -309,9 +336,9 @@ h3 { font-size: 15px; }
   background: var(--surface);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-light);
+  border: 2px solid var(--accent-frame);
   border-radius: var(--r);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 0 0 1px hsla(28 86% 58% / 0.1), var(--shadow-card);
   padding: 18px 20px 16px;
   display: flex;
   flex-direction: column;
@@ -329,7 +356,7 @@ h3 { font-size: 15px; }
   align-self: flex-start;
   gap: 2px;
   background: hsla(0 0% 0% / 0.28);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--accent-border);
   border-radius: 8px;
   padding: 2px;
   margin-bottom: 14px;

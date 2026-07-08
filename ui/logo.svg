@@ -14,12 +14,19 @@
       <stop offset="0" stop-color="#C4711A"/>
       <stop offset="1" stop-color="#6B8DE0"/>
     </linearGradient>
+    <linearGradient id="orangeBorder" x1="0.12" y1="0.04" x2="0.88" y2="0.96">
+      <stop offset="0" stop-color="#F2A14A"/>
+      <stop offset="0.48" stop-color="#E08328"/>
+      <stop offset="1" stop-color="#B86518"/>
+    </linearGradient>
     <filter id="cardShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.45"/>
     </filter>
   </defs>
 
   <rect x="0" y="0" width="1024" height="1024" rx="226" ry="226" fill="url(#bg)"/>
+  <rect x="22" y="22" width="980" height="980" rx="214" ry="214" fill="none" stroke="url(#orangeBorder)" stroke-width="44"/>
+  <rect x="58" y="58" width="908" height="908" rx="176" ry="176" fill="none" stroke="#F2A14A" stroke-opacity="0.22" stroke-width="10"/>
 
   <g filter="url(#cardShadow)">
     <rect x="250" y="230" width="360" height="440" rx="52" fill="#FFFFFF" opacity="0.08"/>

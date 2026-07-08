@@ -526,7 +526,7 @@ function renderGroup(g, idx) {
 
 const DONUT_COLORS = [
   'hsl(28 58% 48%)',   // rust orange
-  'hsl(18 50% 42%)',   // deep rust
+  'hsl(222 45% 58%)',  // muted blue
   'hsl(32 52% 55%)',   // amber
   'hsl(8 45% 48%)',    // red rust
   'hsl(26 40% 62%)',   // soft peach

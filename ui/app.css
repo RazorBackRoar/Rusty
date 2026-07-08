@@ -5,27 +5,27 @@
    action color; red is reserved for destructive actions. */
 
 :root {
-  /* Brand / semantic accents — warm rust orange, not neon */
+  /* Brand / semantic accents — warm rust orange + muted blue */
   --accent:         #c4711a;                     /* orange — brand, Dry mode */
-  --accent-hover:   #d4822a;
+  --accent-hover:   #d08028;
   --accent-muted:   hsla(28 58% 44% / 0.14);
-  --accent-border:  hsla(28 58% 44% / 0.30);
+  --accent-border:  hsla(28 58% 44% / 0.28);
 
-  --blue:           #0a84ff;                     /* primary actions */
-  --blue-hover:     #2e93ff;
-  --blue-muted:     hsla(211 100% 52% / 0.16);
-  --blue-border:    hsla(211 100% 52% / 0.4);
+  --blue:           #6b8de0;                     /* primary actions — muted brand blue */
+  --blue-hover:     #7f9de6;
+  --blue-muted:     hsla(222 58% 65% / 0.16);
+  --blue-border:    hsla(222 58% 65% / 0.35);
 
-  --danger:         #ff453a;                     /* destructive only */
-  --danger-hover:   #ff5f55;
-  --danger-muted:   hsla(3 100% 61% / 0.14);
-  --danger-border:  hsla(3 100% 61% / 0.35);
+  --danger:         #e05a52;                     /* destructive only */
+  --danger-hover:   #eb6e66;
+  --danger-muted:   hsla(3 70% 58% / 0.14);
+  --danger-border:  hsla(3 70% 58% / 0.32);
 
-  --success:        #32d74b;
-  --success-muted:  hsla(131 66% 52% / 0.14);
-  --success-border: hsla(131 66% 52% / 0.35);
+  --success:        #5aab6a;                     /* muted sage — not neon */
+  --success-muted:  hsla(131 40% 48% / 0.14);
+  --success-border: hsla(131 40% 48% / 0.32);
 
-  --brand-gradient: linear-gradient(135deg, #c47a28 0%, #a85a32 42%, #5d7bf7 78%, #2e7cf6 100%);
+  --brand-gradient: linear-gradient(135deg, #c4711a 0%, #b06820 42%, #6b8de0 100%);
 
   /* Window + surfaces */
   --bg-top:         hsl(225 8% 12%);
@@ -458,11 +458,11 @@ h3 { font-size: 15px; }
   font-weight: 600;
 }
 .btn.primary:hover { background: var(--blue-hover); }
-.btn.primary:active { background: #0071e3; }
+.btn.primary:active { background: #6282cf; }
 .btn.danger { background: var(--danger); color: #fff; border-color: transparent; font-weight: 600; }
 .btn.danger:hover { background: var(--danger-hover); }
-.btn.success { background: var(--success); color: hsl(140 60% 10%); border-color: transparent; font-weight: 600; }
-.btn.success:hover { background: hsl(131 66% 58%); }
+.btn.success { background: var(--success); color: hsl(140 35% 12%); border-color: transparent; font-weight: 600; }
+.btn.success:hover { background: hsl(131 40% 54%); }
 
 .btn.scanning { background: var(--blue); opacity: 0.75; cursor: wait; animation: pulse-btn 1.5s infinite; }
 @keyframes pulse-btn { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
@@ -733,7 +733,7 @@ h3 { font-size: 15px; }
 .file-kind { font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.05em; text-align: center; padding: 3px 0; border-radius: 999px; }
 .file-kind.photo { background: var(--accent-muted); color: var(--accent-hover); }
-.file-kind.video { background: var(--blue-muted); color: hsl(211 100% 70%); }
+.file-kind.video { background: var(--blue-muted); color: var(--blue-hover); }
 .file-more { padding: 10px 4px; font-size: 12px; color: var(--faint); font-style: italic; }
 
 /* history */

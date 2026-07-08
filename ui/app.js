@@ -525,14 +525,14 @@ function renderGroup(g, idx) {
 // Wasted-byte composition of duplicate groups, sliced by file extension.
 
 const DONUT_COLORS = [
-  'hsl(24 100% 52%)',   // orange-500
-  'hsl(14 90% 45%)',    // deep rust
-  'hsl(36 100% 60%)',   // amber
-  'hsl(4 70% 50%)',     // red rust
-  'hsl(28 80% 70%)',    // soft peach
-  'hsl(20 60% 30%)',    // dark rust
-  'hsl(40 80% 45%)',    // ochre
-  'hsl(0 0% 25%)',      // black accent
+  'hsl(28 58% 48%)',   // rust orange
+  'hsl(18 50% 42%)',   // deep rust
+  'hsl(32 52% 55%)',   // amber
+  'hsl(8 45% 48%)',    // red rust
+  'hsl(26 40% 62%)',   // soft peach
+  'hsl(20 35% 32%)',   // dark rust
+  'hsl(36 48% 42%)',   // ochre
+  'hsl(0 0% 25%)',     // neutral
 ];
 
 let compositionChart = null;

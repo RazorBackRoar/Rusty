@@ -46,9 +46,11 @@ Repository: $repo_root
 Log: $good_log
 Compiling rusty v$version ($repo_root/src-tauri)
 Built application at: $repo_root/target/release/rusty
-Finished 2 bundles at:
+Finished 1 bundle at:
     $repo_root/target/release/bundle/macos/Rusty.app
-    $repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg
+Building DMG with universal layout (attempt 1/3)...
+DMG built successfully.
+  $repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg
 EOF
 
 wrong_root_log="$tmp_dir/wrong-root.log"
@@ -58,9 +60,11 @@ Repository: /Users/home/Workspace/OtherRusty
 Log: $wrong_root_log
 Compiling rusty v$version (/Users/home/Workspace/OtherRusty/src-tauri)
 Built application at: /Users/home/Workspace/OtherRusty/target/release/rusty
-Finished 2 bundles at:
+Finished 1 bundle at:
     /Users/home/Workspace/OtherRusty/target/release/bundle/macos/Rusty.app
-    /Users/home/Workspace/OtherRusty/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg
+Building DMG with universal layout (attempt 1/3)...
+DMG built successfully.
+  /Users/home/Workspace/OtherRusty/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg
 EOF
 
 portable_root="$tmp_dir/Rusty"
@@ -85,7 +89,7 @@ cat >"$portable_root/src-tauri/tauri.conf.json" <<'EOF'
   "productName": "Rusty",
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": ["app"],
     "macOS": {
       "signingIdentity": "-",
       "dmg": {

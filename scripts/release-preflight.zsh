@@ -121,7 +121,7 @@ dmg = macos.get("dmg", {})
 
 expected = {
     "bundle.active": (bundle.get("active"), True),
-    "bundle.targets": (bundle.get("targets"), ["app", "dmg"]),
+    "bundle.targets": (bundle.get("targets"), ["app"]),
     "bundle.macOS.signingIdentity": (macos.get("signingIdentity"), "-"),
     "dmg.windowSize": (dmg.get("windowSize"), {"width": 500, "height": 360}),
     "dmg.appPosition": (dmg.get("appPosition"), {"x": 130, "y": 160}),

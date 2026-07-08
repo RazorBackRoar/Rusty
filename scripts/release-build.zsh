@@ -22,10 +22,15 @@ print ""
 "$repo_root/scripts/release-preflight.zsh" --check-config-only
 print ""
 
+if [[ -x "$repo_root/scripts/generate-icons.zsh" ]]; then
+    "$repo_root/scripts/generate-icons.zsh"
+    print ""
+fi
+
 cargo tauri build
 print ""
 
-# Build the DMG using the universal workspace layout
+# Build the DMG with the same shared dmgbuild layout as the Python apps.
 dmg_settings="$repo_root/../.razorcore/dmg-settings.py"
 app_abs="$repo_root/target/release/bundle/macos/Rusty.app"
 version="$(sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$repo_root/src-tauri/tauri.conf.json" | head -n 1)"
@@ -37,18 +42,47 @@ dmg_path="$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg"
 mkdir -p "$(dirname "$dmg_path")"
 rm -f "$dmg_path"
 
-if [[ -d "/Volumes/Rusty" ]]; then
-    hdiutil detach "/Volumes/Rusty" -force -quiet 2>/dev/null || true
+vol_icns="$app_abs/Contents/Resources/Rusty.icns"
+if [[ ! -f "$vol_icns" ]]; then
+    vol_icns="$app_abs/Contents/Resources/icon.icns"
 fi
 
-print "Building DMG with universal layout..."
-uvx --from dmgbuild dmgbuild -s "$dmg_settings" -D "app=$app_abs" -D "app_name=Rusty" "Rusty" "$dmg_path"
+dmg_defines=(-D "app=$app_abs" -D "app_name=Rusty")
+if [[ -f "$vol_icns" ]]; then
+    dmg_defines+=(-D "vol_icon=$vol_icns")
+fi
+
+if ! command -v uvx >/dev/null 2>&1; then
+    print "Error: uvx is required to build the DMG with the shared layout."
+    exit 1
+fi
+
+dmg_ok=0
+for attempt in 1 2 3; do
+    if [[ -d "/Volumes/Rusty" ]]; then
+        hdiutil detach "/Volumes/Rusty" -force -quiet 2>/dev/null || true
+    fi
+    rm -f "$dmg_path"
+    print "Building DMG with universal layout (attempt ${attempt}/3)..."
+    if uvx --from dmgbuild dmgbuild -s "$dmg_settings" "${dmg_defines[@]}" "Rusty" "$dmg_path"; then
+        dmg_ok=1
+        break
+    fi
+    print "Warning: DMG build attempt ${attempt}/3 failed; retrying..."
+    sleep 2
+done
+
+if [[ $dmg_ok -ne 1 ]]; then
+    print "Error: DMG build failed after 3 attempts."
+    exit 1
+fi
 
 if ! uv run --no-project --python 3.14 python "$repo_root/../.razorcore/verify-dmg-layout.py" "$dmg_path" "Rusty"; then
     print "Error: DMG failed layout verification."
     exit 1
 fi
 print "DMG built successfully."
+print "  $dmg_path"
 print ""
 
 "$repo_root/scripts/release-preflight.zsh" --verify-log "$log_path" --verify-bundles

@@ -998,6 +998,96 @@ function showError(err) {
   console.error(err);
 }
 
+// ----------------------------- about / updates -------------------------
+
+function closeAbout() {
+  const backdrop = $('about-backdrop');
+  if (backdrop) backdrop.hidden = true;
+}
+
+async function openAbout() {
+  const backdrop = $('about-backdrop');
+  const body = $('about-body');
+  const status = $('about-status');
+  if (!backdrop || !body) return;
+  status.hidden = true;
+  status.textContent = '';
+  status.className = 'about-status';
+  body.innerHTML = '';
+  try {
+    const info = await invoke('get_app_info');
+    const rows = [
+      ['Name', info.name],
+      ['Version', info.version],
+      ['License', info.license],
+      ['Organization', info.organization],
+      ['Architecture', info.architecture],
+    ];
+    for (const [k, v] of rows) {
+      body.appendChild(el('dt', {}, k));
+      body.appendChild(el('dd', {}, String(v ?? '')));
+    }
+    $('about-title').textContent = `About ${info.name}`;
+  } catch (err) {
+    body.appendChild(el('dt', {}, 'Error'));
+    body.appendChild(el('dd', {}, err?.message ?? String(err)));
+  }
+  backdrop.hidden = false;
+}
+
+async function checkForUpdates() {
+  const backdrop = $('about-backdrop');
+  const status = $('about-status');
+  if (backdrop && backdrop.hidden) await openAbout();
+  if (!status) return;
+  status.hidden = false;
+  status.className = 'about-status';
+  status.textContent = 'Checking for updates…';
+  try {
+    const result = await invoke('check_for_updates');
+    if (result.error) {
+      status.className = 'about-status error';
+      status.textContent = `Update check failed: ${result.error}`;
+      return;
+    }
+    if (result.update_available) {
+      status.className = 'about-status update';
+      const url = result.download_url ? ` — ${result.download_url}` : '';
+      status.textContent = `Update available: ${result.latest_version} (you have ${result.current_version})${url}`;
+    } else {
+      status.className = 'about-status ok';
+      status.textContent = `You're up to date (${result.current_version}).`;
+    }
+  } catch (err) {
+    status.className = 'about-status error';
+    status.textContent = `Update check failed: ${err?.message ?? String(err)}`;
+  }
+}
+
+function setupBrandGestures() {
+  const brand = $('brand');
+  if (!brand) return;
+  brand.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openAbout();
+  });
+  brand.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    checkForUpdates();
+  });
+  $('about-close')?.addEventListener('click', closeAbout);
+  $('about-backdrop')?.addEventListener('click', (e) => {
+    if (e.target === $('about-backdrop')) closeAbout();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && $('about-backdrop') && !$('about-backdrop').hidden) {
+      closeAbout();
+    }
+  });
+}
+
 // ----------------------------- boot ------------------------------------
 
 function setupConfirmInput() {
@@ -1023,6 +1113,7 @@ function setupConfirmInput() {
 window.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   setupConfirmInput();
+  setupBrandGestures();
 
   $('pick-folder').addEventListener('click', pickFolder);
   $('clear-folders').addEventListener('click', () => {

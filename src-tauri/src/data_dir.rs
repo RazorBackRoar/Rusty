@@ -133,6 +133,27 @@ fn default_root_for_home(home: &Path) -> PathBuf {
     }
 }
 
+/// Update-check cache directory (`~/Library/Caches/Rusty` on macOS).
+/// App state stays under the bundle-ID Application Support path; only the
+/// GitHub Releases response cache uses this display-name layout.
+pub fn app_cache_dir() -> PathBuf {
+    if let Ok(custom) = std::env::var("RUSTY_CACHE_DIR") {
+        return PathBuf::from(custom);
+    }
+    match std::env::var("HOME") {
+        Ok(home) => default_cache_for_home(Path::new(&home)),
+        Err(_) => PathBuf::from("/tmp/rusty-cache"),
+    }
+}
+
+fn default_cache_for_home(home: &Path) -> PathBuf {
+    if cfg!(target_os = "macos") {
+        home.join("Library").join("Caches").join("Rusty")
+    } else {
+        home.join(".cache").join("rusty")
+    }
+}
+
 fn migrate_legacy_app_data_root(root: &Path) -> AppResult<()> {
     let Some(legacy_root) = legacy_root_for_canonical(root) else {
         return Ok(());
@@ -198,6 +219,16 @@ mod tests {
         assert_eq!(
             root,
             PathBuf::from("/Users/example/Library/Application Support/com.rusty.desktop")
+        );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_cache_dir_uses_display_name() {
+        let cache = default_cache_for_home(Path::new("/Users/example"));
+        assert_eq!(
+            cache,
+            PathBuf::from("/Users/example/Library/Caches/Rusty")
         );
     }
 

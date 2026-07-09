@@ -587,6 +587,22 @@ pub async fn reveal_path(app: AppHandle, path: String) -> Result<(), AppError> {
     Ok(())
 }
 
+#[tauri::command]
+pub async fn get_app_info() -> Result<crate::appinfo::AppInfo, AppError> {
+    Ok(crate::appinfo::AppInfo::current())
+}
+
+#[tauri::command]
+pub async fn check_for_updates() -> Result<crate::updates::UpdateResult, AppError> {
+    let current = env!("CARGO_PKG_VERSION").to_string();
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        crate::updates::check_for_updates(&current)
+    })
+    .await
+    .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
+    Ok(result)
+}
+
 fn csv_escape(s: &str) -> String {
     if s.contains(',') || s.contains('"') || s.contains('\n') {
         let escaped = s.replace('"', "\"\"");

@@ -13,7 +13,7 @@
   <body>
     <!-- ───────────────────────── Toolbar ───────────────────────── -->
     <header class="toolbar" data-tauri-drag-region>
-      <div class="brand">
+      <div class="brand" id="brand" title="Double-click for About · Right-click for updates">
         <img class="logo-img" src="logo.svg" alt="Rusty" />
         <div class="brand-text">
           <h1>Rusty</h1>
@@ -197,6 +197,18 @@
         <div class="row right">
           <button class="btn" id="confirm-no">Cancel</button>
           <button class="btn danger" id="confirm-yes" disabled>Yes, apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About / updates modal -->
+    <div class="modal-backdrop" id="about-backdrop" hidden>
+      <div class="modal about-modal" role="dialog" aria-labelledby="about-title" aria-modal="true">
+        <h3 id="about-title">About Rusty</h3>
+        <dl class="about-kv" id="about-body"></dl>
+        <p class="about-status" id="about-status" hidden></p>
+        <div class="row right">
+          <button class="btn" id="about-close" type="button">Close</button>
         </div>
       </div>
     </div>

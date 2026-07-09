@@ -1,3 +1,4 @@
+pub mod appinfo;
 pub mod commands;
 pub mod data_dir;
 pub mod dedupe;
@@ -8,6 +9,7 @@ pub mod paths;
 pub mod quarantine;
 pub mod scanner;
 pub mod state;
+pub mod updates;
 
 pub use data_dir::DataDir;
 pub use error::{AppError, AppResult};
@@ -41,6 +43,8 @@ pub fn run() {
             commands::data_paths,
             commands::reveal_path,
             commands::cancel_scan,
+            commands::get_app_info,
+            commands::check_for_updates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

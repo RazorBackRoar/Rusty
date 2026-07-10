@@ -1,7 +1,7 @@
 # Rusty
 
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Rusty/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.2.1-blue?style=for-the-badge)](Cargo.toml)
+[![Release](https://img.shields.io/github/v/release/RazorBackRoar/Rusty?style=for-the-badge&label=release)](https://github.com/RazorBackRoar/Rusty/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-2021-e8710a?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Tauri](https://img.shields.io/badge/Tauri-f5c518?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
@@ -21,6 +21,21 @@ Rusty only ever finds **exact, byte-for-byte duplicates**. It never deletes:
 the destructive step *moves* duplicates into a quarantine folder with a manifest
 you can undo. The default mode is **Dry** — a fast, read-only preview that
 changes nothing on disk.
+
+---
+
+## Platform requirements
+
+- macOS 11.0+ on Apple Silicon (arm64)
+- No Rust or Node install required for the packaged `.dmg` / `.app`
+
+---
+
+## Installation
+
+1. Download the latest `.dmg` from [Releases](https://github.com/RazorBackRoar/Rusty/releases)
+2. Open the DMG and drag `Rusty.app` to `/Applications`
+3. First launch — right-click → **Open** if Gatekeeper blocks the ad-hoc signed build
 
 ---
 
@@ -400,12 +415,6 @@ target/release/bundle/dmg/Rusty_0.2.1_aarch64.dmg
 
 The Mach-O binary inside the app is named `rusty` (lowercase).
 
-### Install from release
-
-1. Download the latest `.dmg` from [Releases](https://github.com/RazorBackRoar/Rusty/releases)
-2. Open the DMG and drag `Rusty.app` to `/Applications`
-3. First launch — right-click → **Open** if Gatekeeper blocks the ad-hoc signed build
-
 Each release run writes a timestamped log under `build-logs/`.
 
 ---
@@ -431,3 +440,10 @@ Tests cover, among others:
 - Media-only scans hash supported photos/videos and skip artifacts
 - Default plan keeps exactly one copy per group
 - Apply → undo round-trips every file back to its original path
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+Copyright © 2026 RazorBackRoar

@@ -134,6 +134,7 @@ pub fn apply(
         mode: "quarantine".into(),
         entries: Vec::new(),
     };
+    write_manifest_atomic(&manifest_path, &manifest)?;
 
     // A keeper path for each hash, so a victim can be byte-verified against the
     // copy that will survive before we move it.
@@ -155,18 +156,6 @@ pub fn apply(
     let mut canceled = false;
     let mut not_processed = 0i64;
 
-    let mut record = |status: &str, entry: &PlanEntry, qpath: &str, reason: Option<String>| {
-        manifest.entries.push(ManifestEntry {
-            hash: entry.hash.clone(),
-            original_path: entry.path.clone(),
-            quarantine_path: qpath.to_string(),
-            size: entry.size,
-            moved_ts: Utc::now().to_rfc3339(),
-            status: status.to_string(),
-            reason,
-        });
-    };
-
     for entry in plan {
         match entry.action {
             PlanAction::Keep => {
@@ -180,19 +169,28 @@ pub fn apply(
                     canceled = true;
                     not_processed += 1;
                     logs.warn(format!("quarantine canceled before moving {}", entry.path));
-                    record("skipped", entry, "", Some("canceled before move".into()));
+                    push_manifest_entry(
+                        &mut manifest,
+                        &manifest_path,
+                        "skipped",
+                        entry,
+                        "",
+                        Some("canceled before move".into()),
+                    )?;
                     continue;
                 }
                 let source = Path::new(&entry.path);
                 if !source.exists() {
                     failed += 1;
                     logs.warn(format!("source vanished (skipped): {}", entry.path));
-                    record(
+                    push_manifest_entry(
+                        &mut manifest,
+                        &manifest_path,
                         "skipped",
                         entry,
                         "",
                         Some("source file no longer exists".into()),
-                    );
+                    )?;
                     continue;
                 }
                 // Last-line safety: confirm this victim is byte-identical to the
@@ -208,12 +206,14 @@ pub fn apply(
                                 "content mismatch — refusing to quarantine {} (differs from keeper {})",
                                 entry.path, keeper_path
                             ));
-                            record(
+                            push_manifest_entry(
+                                &mut manifest,
+                                &manifest_path,
                                 "failed",
                                 entry,
                                 "",
                                 Some(format!("content differs from keeper {keeper_path}")),
-                            );
+                            )?;
                             continue;
                         }
                         Err(e) => {
@@ -222,7 +222,14 @@ pub fn apply(
                                 "could not verify {} against keeper {}: {e}",
                                 entry.path, keeper_path
                             ));
-                            record("failed", entry, "", Some(format!("verify error: {e}")));
+                            push_manifest_entry(
+                                &mut manifest,
+                                &manifest_path,
+                                "failed",
+                                entry,
+                                "",
+                                Some(format!("verify error: {e}")),
+                            )?;
                             continue;
                         }
                     }
@@ -235,19 +242,46 @@ pub fn apply(
                         source.display(),
                         dest.display()
                     ));
-                    record("failed", entry, "", Some(format!("move error: {e}")));
+                    push_manifest_entry(
+                        &mut manifest,
+                        &manifest_path,
+                        "failed",
+                        entry,
+                        "",
+                        Some(format!("move error: {e}")),
+                    )?;
                     continue;
                 }
                 quarantined += 1;
                 bytes_freed += entry.size;
                 logs.real(format!("QUARANTINED {} -> {}", entry.path, dest.display()));
-                record("moved", entry, &dest.to_string_lossy(), None);
+                if let Err(e) = push_manifest_entry(
+                    &mut manifest,
+                    &manifest_path,
+                    "moved",
+                    entry,
+                    &dest.to_string_lossy(),
+                    None,
+                ) {
+                    if let Err(rollback) = move_with_fallback(&dest, source) {
+                        logs.error(format!(
+                            "manifest write failed after move and rollback failed: {rollback}"
+                        ));
+                    } else {
+                        logs.warn(format!(
+                            "manifest write failed; reverted move of {}",
+                            entry.path
+                        ));
+                        quarantined -= 1;
+                        bytes_freed -= entry.size;
+                    }
+                    return Err(e);
+                }
                 let _ = memory.delete_file_by_path(&entry.normalized_path);
             }
         }
     }
 
-    fs::write(&manifest_path, serde_json::to_vec_pretty(&manifest)?)?;
     logs.real(format!("manifest written: {}", manifest_path.display()));
     // Human-readable log alongside the quarantined files (original → quarantine
     // mapping), so the source is recoverable without recreating folder trees.
@@ -433,6 +467,38 @@ fn fill(r: &mut impl Read, buf: &mut [u8]) -> std::io::Result<usize> {
     Ok(filled)
 }
 
+fn push_manifest_entry(
+    manifest: &mut Manifest,
+    manifest_path: &Path,
+    status: &str,
+    entry: &PlanEntry,
+    qpath: &str,
+    reason: Option<String>,
+) -> AppResult<()> {
+    manifest.entries.push(ManifestEntry {
+        hash: entry.hash.clone(),
+        original_path: entry.path.clone(),
+        quarantine_path: qpath.to_string(),
+        size: entry.size,
+        moved_ts: Utc::now().to_rfc3339(),
+        status: status.to_string(),
+        reason,
+    });
+    write_manifest_atomic(manifest_path, manifest)
+}
+
+/// Persist the manifest atomically so a crash or late I/O failure never leaves
+/// moved files without an undo mapping on disk.
+fn write_manifest_atomic(path: &Path, manifest: &Manifest) -> AppResult<()> {
+    let tmp = path.with_extension("json.tmp");
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&tmp, serde_json::to_vec_pretty(manifest)?)?;
+    fs::rename(&tmp, path)?;
+    Ok(())
+}
+
 fn move_with_fallback(src: &Path, dst: &Path) -> std::io::Result<()> {
     // Try rename first (fast, atomic within a volume). Fall back to copy+delete
     // only on EXDEV (cross-device) — all other rename errors are returned as-is
@@ -456,5 +522,70 @@ fn move_with_fallback(src: &Path, dst: &Path) -> std::io::Result<()> {
                 Err(e)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dedupe::{PlanAction, PlanEntry};
+
+    #[test]
+    fn write_manifest_atomic_roundtrips_without_tmp_artifact() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("20260101-test.json");
+        let manifest = Manifest {
+            run_id: "20260101-test".into(),
+            started_ts: "2026-01-01T00:00:00Z".into(),
+            mode: "quarantine".into(),
+            entries: vec![ManifestEntry {
+                hash: "abc".into(),
+                original_path: "/tmp/a.jpg".into(),
+                quarantine_path: "/tmp/Quarantine/a.jpg".into(),
+                size: 10,
+                moved_ts: "2026-01-01T00:00:01Z".into(),
+                status: "moved".into(),
+                reason: None,
+            }],
+        };
+
+        write_manifest_atomic(&path, &manifest).unwrap();
+
+        assert!(path.exists());
+        assert!(
+            !path.with_extension("json.tmp").exists(),
+            "atomic write must not leave a temp manifest behind"
+        );
+        let loaded: Manifest = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(loaded.entries.len(), 1);
+        assert_eq!(loaded.entries[0].status, "moved");
+    }
+
+    #[test]
+    fn push_manifest_entry_appends_and_persists_incrementally() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("run.json");
+        let mut manifest = Manifest {
+            run_id: "run".into(),
+            started_ts: "2026-01-01T00:00:00Z".into(),
+            mode: "quarantine".into(),
+            entries: Vec::new(),
+        };
+        write_manifest_atomic(&path, &manifest).unwrap();
+
+        let entry = PlanEntry {
+            path: "/tmp/victim.jpg".into(),
+            normalized_path: "/tmp/victim.jpg".into(),
+            hash: "deadbeef".into(),
+            size: 42,
+            action: PlanAction::Quarantine,
+            reason: "duplicate".into(),
+        };
+        push_manifest_entry(&mut manifest, &path, "moved", &entry, "/tmp/q/victim.jpg", None)
+            .unwrap();
+
+        let loaded: Manifest = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(loaded.entries.len(), 1);
+        assert_eq!(loaded.entries[0].quarantine_path, "/tmp/q/victim.jpg");
     }
 }

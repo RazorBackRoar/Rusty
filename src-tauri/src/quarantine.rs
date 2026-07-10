@@ -588,4 +588,53 @@ mod tests {
         assert_eq!(loaded.entries.len(), 1);
         assert_eq!(loaded.entries[0].quarantine_path, "/tmp/q/victim.jpg");
     }
+
+    #[test]
+    fn push_manifest_entry_persists_each_append_for_partial_undo() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("run.json");
+        let mut manifest = Manifest {
+            run_id: "run".into(),
+            started_ts: "2026-01-01T00:00:00Z".into(),
+            mode: "quarantine".into(),
+            entries: Vec::new(),
+        };
+        write_manifest_atomic(&path, &manifest).unwrap();
+
+        let first = PlanEntry {
+            path: "/tmp/a.jpg".into(),
+            normalized_path: "/tmp/a.jpg".into(),
+            hash: "aaa".into(),
+            size: 10,
+            action: PlanAction::Quarantine,
+            reason: "duplicate".into(),
+        };
+        push_manifest_entry(&mut manifest, &path, "moved", &first, "/tmp/q/a.jpg", None)
+            .unwrap();
+
+        let after_first: Manifest =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(after_first.entries.len(), 1);
+        assert_eq!(after_first.entries[0].original_path, "/tmp/a.jpg");
+
+        let second = PlanEntry {
+            path: "/tmp/b.jpg".into(),
+            normalized_path: "/tmp/b.jpg".into(),
+            hash: "bbb".into(),
+            size: 20,
+            action: PlanAction::Quarantine,
+            reason: "duplicate".into(),
+        };
+        push_manifest_entry(&mut manifest, &path, "moved", &second, "/tmp/q/b.jpg", None)
+            .unwrap();
+
+        let after_second: Manifest =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(after_second.entries.len(), 2);
+        assert_eq!(
+            after_second.entries[1].quarantine_path,
+            "/tmp/q/b.jpg",
+            "each move must be on disk before the next append"
+        );
+    }
 }

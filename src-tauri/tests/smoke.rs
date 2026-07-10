@@ -384,6 +384,53 @@ fn default_plan_keeps_one_per_group() {
 }
 
 #[test]
+fn quarantine_manifest_records_every_moved_file_for_undo() {
+    let temp = tempfile::tempdir().unwrap();
+    let src = temp.path().join("src");
+    make_tree(&src);
+    let data = make_data_dir(&temp.path().to_path_buf());
+    let memory = MemoryBank::open(&data.memory_db).unwrap();
+    let logs = LogSink::new(data.current_log_path());
+    let cancel = Arc::new(AtomicBool::new(false));
+    let scan_id = memory
+        .start_scan("real", &[src.to_string_lossy().into()])
+        .unwrap();
+    let (files, _) = scanner::scan_roots(&[src.clone()], &memory, &logs, &cancel, scan_id).unwrap();
+    let report = dedupe::group_duplicates(&files);
+    let plan = dedupe::default_plan(&report);
+
+    let result = quarantine::apply(&plan, &data, &memory, &logs, &cancel).unwrap();
+    assert!(
+        result.quarantined >= 2,
+        "fixture should quarantine multiple victims, got {}",
+        result.quarantined
+    );
+
+    let manifest_bytes = fs::read(&result.manifest_path).unwrap();
+    let manifest: quarantine::Manifest = serde_json::from_slice(&manifest_bytes).unwrap();
+    let moved: Vec<_> = manifest
+        .entries
+        .iter()
+        .filter(|entry| entry.status == "moved")
+        .collect();
+    assert_eq!(
+        moved.len() as i64,
+        result.quarantined,
+        "manifest must list every moved file so partial runs stay undoable"
+    );
+    for entry in moved {
+        assert!(
+            !entry.quarantine_path.is_empty(),
+            "moved entry must record quarantine destination"
+        );
+        assert!(
+            std::path::Path::new(&entry.quarantine_path).exists(),
+            "manifest mapping must point at a real quarantined file"
+        );
+    }
+}
+
+#[test]
 fn apply_then_undo_roundtrips() {
     let temp = tempfile::tempdir().unwrap();
     let src = temp.path().join("src");

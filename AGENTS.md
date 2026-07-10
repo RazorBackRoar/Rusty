@@ -1,18 +1,31 @@
 # Rusty AGENTS
 
-Guidance for AI agents working in this repository.
+Guidance for AI agents working in this repository. Use with `../AGENTS.md`.
 
-## Purpose And Entry Points
+## Purpose and entry points
 
 Rusty is a native macOS duplicate photo & video finder: Tauri 2 frontend, Rust
-backend, persistent BLAKE3 hash cache in SQLite (WAL). Unlike the other apps in
+backend, persistent BLAKE3 hash cache in SQLite (WAL). Unlike the Python apps in
 this workspace, Rusty is **Rust, not Python** — `uv`/`ruff`/`ty`/`pytest` do not
-apply here. Use `cargo`.
+apply. Use `cargo`.
 
 - Workspace root: `Cargo.toml` (member crate: `src-tauri`, package `rusty`,
   lib `rusty_core`)
 - Binary entry: `src-tauri/src/main.rs`; Tauri builder in `src-tauri/src/lib.rs`
+- Spec-aligned modules: `appinfo.rs`, `updates.rs`, `data_dir.rs`, `logs.rs`
 - Frontend: `ui/` — plain HTML/CSS/JS, no bundler, no Node.js
+
+Behavioral SSOT for cross-app contracts: `../Docs/razorcore-api-spec.md`
+(Rusty implements contracts in-app; it does not import Python `razorcore`).
+
+## Identifiers and paths
+
+| Surface | Value |
+|---------|-------|
+| Bundle ID | `com.rusty.desktop` (legacy: `com.rusty.app`) |
+| Binary / process name | `rusty` (lowercase — use `pgrep -x rusty`) |
+| App support | `~/Library/Application Support/com.rusty.desktop/` |
+| Update cache | `~/Library/Caches/Rusty/` |
 
 ## Environment
 
@@ -23,15 +36,15 @@ apply here. Use `cargo`.
 ## Commands
 
 ```zsh
-cargo check --workspace          # fast compile check
-cargo clippy --workspace         # lint (if clippy is installed)
-cargo test --workspace           # the app's test suite
-zsh scripts/release-build.zsh    # release .app + .dmg (runs preflight checks)
+cargo check --workspace
+cargo clippy --workspace
+cargo test --workspace
+zsh scripts/release-build.zsh
 ```
 
 Run `cargo test --workspace` before claiming success on any change.
 
-## Safety Rules — preserve the dedup/quarantine contract
+## Safety rules — preserve the dedup/quarantine contract
 
 These behaviors are the product. Do not change them unless explicitly requested:
 
@@ -53,7 +66,7 @@ These behaviors are the product. Do not change them unless explicitly requested:
   hashes already saved, never undoes completed moves.
 - Sources are read-only — Rusty never writes into scanned folders.
 
-## Repository Rules
+## Repository rules
 
 - Use minimal, targeted changes; do not mix refactors with feature work.
 - Prefer existing tooling and patterns; do not add dependencies unless
@@ -61,7 +74,7 @@ These behaviors are the product. Do not change them unless explicitly requested:
 - Preserve the UI/backend separation: UI calls `invoke()` into
   `#[tauri::command]` handlers in `commands.rs`; core logic lives in
   `rusty_core` modules (`scanner.rs`, `memory.rs`, `dedupe.rs`,
-  `quarantine.rs`, …).
+  `quarantine.rs`, `appinfo.rs`, `updates.rs`, …).
 - `_archive_pre_tauri/` is the frozen pre-Tauri implementation — read-only
   reference, never edit or revive it.
 - `target/` and `build-logs/` are generated — never treat them as source.

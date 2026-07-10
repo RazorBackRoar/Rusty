@@ -8,8 +8,8 @@
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->
-[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
-[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
+[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)]()
+[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)]()
 
 > **TL;DR:** Safe, native macOS duplicate photo and video finder. Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
 
@@ -363,6 +363,8 @@ Rusty/
 │   │   ├── paths.rs          # NFC normalize + sanitize + media filtering
 │   │   ├── logs.rs           # ring-buffer log feed
 │   │   ├── data_dir.rs       # resolves app-data layout
+│   │   ├── appinfo.rs        # startup banner / About metadata
+│   │   ├── updates.rs        # GitHub Releases update check
 │   │   ├── state.rs          # shared app state
 │   │   └── error.rs          # typed errors that serialize to JS
 │   └── tests/smoke.rs        # integration tests
@@ -396,6 +398,8 @@ target/release/bundle/macos/Rusty.app
 target/release/bundle/dmg/Rusty_0.2.1_aarch64.dmg
 ```
 
+The Mach-O binary inside the app is named `rusty` (lowercase).
+
 ### Install from release
 
 1. Download the latest `.dmg` from [Releases](https://github.com/RazorBackRoar/Rusty/releases)
@@ -427,4 +431,3 @@ Tests cover, among others:
 - Media-only scans hash supported photos/videos and skip artifacts
 - Default plan keeps exactly one copy per group
 - Apply → undo round-trips every file back to its original path
-```

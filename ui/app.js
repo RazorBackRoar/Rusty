@@ -16,6 +16,8 @@ const state = {
   followLogs: true,
   paths: null,
   lastManifest: null,  // manifest path of the most recent apply, for undo
+  compareFolders: [null, null],  // [folder1_path, folder2_path]
+  compareRunning: false,
 };
 
 // ----------------------------- DOM helpers -----------------------------
@@ -960,10 +962,151 @@ async function exportReport() {
 }
 
 
+// ----------------------------- compare folders --------------------------
+
+function updateCompareButton() {
+  const btn = $('compare-btn');
+  btn.disabled = !state.compareFolders[0] || !state.compareFolders[1] || state.compareRunning;
+}
+
+function renderCompareZone(slot) {
+  const zone = $(`compare-drop-${slot}`);
+  const path = state.compareFolders[slot - 1];
+  if (path) {
+    zone.classList.add('filled');
+    zone.innerHTML = '';
+    zone.appendChild(el('span', { class: 'compare-drop-icon' }, '📁'));
+    zone.appendChild(el('span', { class: 'compare-drop-label' }, `Folder ${slot}`));
+    zone.appendChild(el('span', { class: 'compare-drop-path' }, path));
+    zone.appendChild(
+      el('button', {
+        class: 'compare-drop-remove',
+        onClick: (e) => {
+          e.stopPropagation();
+          state.compareFolders[slot - 1] = null;
+          renderCompareZone(slot);
+          updateCompareButton();
+        },
+      }, 'Remove')
+    );
+  } else {
+    zone.classList.remove('filled');
+    zone.innerHTML = '';
+    zone.appendChild(el('span', { class: 'compare-drop-icon' }, '📁'));
+    zone.appendChild(el('span', { class: 'compare-drop-label' }, `Folder ${slot}`));
+    zone.appendChild(el('span', { class: 'compare-drop-hint' }, 'Click or drag a folder here'));
+  }
+}
+
+async function pickCompareFolder(slot) {
+  try {
+    const paths = await invoke('pick_folders');
+    if (paths.length > 0) {
+      state.compareFolders[slot - 1] = paths[0];
+      renderCompareZone(slot);
+      updateCompareButton();
+    }
+  } catch (err) {
+    showError(err);
+  }
+}
+
+// Attempt to route a Tauri drag-drop event to a compare drop zone.
+// Returns true if the drop was consumed (compare tab active + hit a zone).
+function tryCompareZoneDrop(paths) {
+  const compareTab = document.querySelector('.tab[data-tab="compare"]');
+  if (!compareTab || !compareTab.classList.contains('active')) return false;
+  if (!paths || paths.length === 0) return false;
+
+  // Fill the first empty slot
+  const path = paths[0];
+  if (!state.compareFolders[0]) {
+    state.compareFolders[0] = path;
+    renderCompareZone(1);
+    updateCompareButton();
+    return true;
+  } else if (!state.compareFolders[1]) {
+    state.compareFolders[1] = path;
+    renderCompareZone(2);
+    updateCompareButton();
+    return true;
+  }
+  return false;
+}
+
+async function runComparison() {
+  const folder1 = state.compareFolders[0];
+  const folder2 = state.compareFolders[1];
+  if (!folder1 || !folder2) return;
+  if (state.compareRunning) return;
+
+  state.compareRunning = true;
+  const btn = $('compare-btn');
+  btn.disabled = true;
+  btn.textContent = 'Comparing…';
+  btn.classList.add('scanning');
+
+  const results = $('compare-results');
+  results.innerHTML = '';
+
+  try {
+    const resp = await invoke('run_scan', {
+      request: {
+        roots: [folder1, folder2],
+        mode: 'dry',
+        min_size: 0,
+        skip_dev_dirs: true,
+        exclude: [],
+        media_only: false,  // compare all files, not just media
+      },
+    });
+
+    const groups = resp.report.groups;
+
+    if (groups.length === 0) {
+      results.appendChild(
+        el('div', { class: 'compare-empty' },
+          el('span', { class: 'compare-empty-icon' }, '✓'),
+          el('span', { class: 'compare-empty-title' }, 'No duplicates found'),
+          el('span', { class: 'compare-empty-text' },
+            `Scanned ${resp.counters.files_walked} files across both folders — all unique.`)
+        )
+      );
+    } else {
+      // Summary
+      results.appendChild(
+        el('div', { class: 'compare-summary' },
+          `Found `,
+          el('span', { class: 'compare-stat' }, `${groups.length} duplicate group(s)`),
+          ` across ${resp.counters.files_walked} files — `,
+          el('span', { class: 'compare-stat' }, fmtBytes(resp.report.total_wasted_bytes)),
+          ` wasted.`
+        )
+      );
+      // Render groups using existing renderer
+      groups.forEach((g, idx) => results.appendChild(renderGroup(g, idx)));
+    }
+  } catch (err) {
+    if (!isCancelError(err)) {
+      showError(err);
+      results.appendChild(
+        el('div', { class: 'compare-empty' },
+          el('span', { class: 'compare-empty-title' }, 'Comparison failed'),
+          el('span', { class: 'compare-empty-text' }, err?.message ?? String(err))
+        )
+      );
+    }
+  } finally {
+    state.compareRunning = false;
+    btn.classList.remove('scanning');
+    btn.textContent = 'Compare Folders';
+    updateCompareButton();
+  }
+}
 
 // ----------------------------- tabs ------------------------------------
 
-const TAB_TITLES = { files: 'Files', duplicates: 'Duplicates', logs: 'Logs' };
+const TAB_TITLES = { files: 'Files', duplicates: 'Duplicates', logs: 'Logs', compare: 'Compare' };
 
 function setupTabs() {
   document.querySelectorAll('.tab').forEach((tab) => {
@@ -1165,6 +1308,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.__TAURI__.event.listen('tauri://drag-drop', (ev) => {
       document.body.classList.remove('drag-over');
       const paths = ev.payload?.paths || [];
+      // If the Compare tab is active, try to route the drop to a compare zone first.
+      if (tryCompareZoneDrop(paths)) return;
       let added = false;
       for (const p of paths) {
         if (!state.roots.includes(p)) {
@@ -1198,6 +1343,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     try { await invoke('clear_logs'); state.logSince = 0; $('logs').innerHTML = ''; } catch {}
   });
   $('follow').addEventListener('change', (e) => { state.followLogs = e.target.checked; });
+
+  // Compare tab — click-to-browse on drop zones
+  $('compare-drop-1').addEventListener('click', (e) => {
+    if (e.target.closest('.compare-drop-remove')) return;
+    if (!state.compareFolders[0]) pickCompareFolder(1);
+  });
+  $('compare-drop-2').addEventListener('click', (e) => {
+    if (e.target.closest('.compare-drop-remove')) return;
+    if (!state.compareFolders[1]) pickCompareFolder(2);
+  });
+  $('compare-btn').addEventListener('click', runComparison);
 
   renderRoots();
   setMode('dry');

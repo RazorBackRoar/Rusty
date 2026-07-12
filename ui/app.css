@@ -5,18 +5,18 @@
    action color; red is reserved for destructive actions. */
 
 :root {
-  /* Brand / semantic accents — warm rust orange + muted blue */
-  --accent:         #c4711a;                     /* orange — brand, Dry mode */
-  --accent-hover:   #d08028;
-  --accent-muted:   hsla(28 58% 44% / 0.14);
-  --accent-border:  hsla(28 86% 58% / 0.5);
-  --accent-edge:    hsla(28 86% 58% / 0.9);
-  --accent-frame:   hsla(28 86% 58% / 0.72);
+  /* Brand / semantic accents — Gold & Silver */
+  --accent:         #d4af37;                     /* warm metallic gold */
+  --accent-hover:   #e5c04f;
+  --accent-muted:   hsla(43 60% 52% / 0.15);
+  --accent-border:  hsla(43 60% 52% / 0.4);
+  --accent-edge:    hsla(43 60% 52% / 0.85);
+  --accent-frame:   hsla(43 60% 52% / 0.72);
 
-  --blue:           #6b8de0;                     /* primary actions — muted brand blue */
-  --blue-hover:     #7f9de6;
-  --blue-muted:     hsla(222 58% 65% / 0.16);
-  --blue-border:    hsla(222 58% 65% / 0.35);
+  --blue:           #a3b0be;                     /* premium silver gray */
+  --blue-hover:     #b8c5d4;
+  --blue-muted:     hsla(212 15% 72% / 0.16);
+  --blue-border:    hsla(212 15% 72% / 0.35);
 
   --danger:         #e05a52;                     /* destructive only */
   --danger-hover:   #eb6e66;
@@ -27,7 +27,7 @@
   --success-muted:  hsla(131 40% 48% / 0.14);
   --success-border: hsla(131 40% 48% / 0.32);
 
-  --brand-gradient: linear-gradient(135deg, #c4711a 0%, #b06820 42%, #6b8de0 100%);
+  --brand-gradient: linear-gradient(135deg, #d4af37 0%, #c49a2a 45%, #a3b0be 100%);
 
   /* Window + surfaces */
   --bg-top:         hsl(225 8% 12%);
@@ -40,7 +40,7 @@
   /* Hairlines */
   --border:         hsla(0 0% 100% / 0.1);
   --border-light:   hsla(0 0% 100% / 0.06);
-  --gold-line:      hsla(38 60% 56% / 0.38);       /* thin warm gold accent border */
+  --gold-line:      hsla(43 55% 52% / 0.38);       /* thin warm gold accent border */
 
   /* Text */
   --text:           hsl(220 10% 96%);
@@ -1058,11 +1058,11 @@ body.drag-over::after {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 72px;
+  min-height: 58px;
   border: 2px dashed var(--border);
   border-radius: var(--r-sm);
   background: var(--well);
-  padding: 12px 10px;
+  padding: 10px 8px;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;

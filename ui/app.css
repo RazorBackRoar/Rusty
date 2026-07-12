@@ -43,9 +43,9 @@
   --gold-line:      hsla(43 55% 52% / 0.38);       /* thin warm gold accent border */
 
   /* Text */
-  --text:           hsl(220 10% 96%);
-  --muted:          hsla(0 0% 100% / 0.62);
-  --faint:          hsla(0 0% 100% / 0.38);
+  --text:           #ffffff;
+  --muted:          hsla(0, 0%, 100%, 0.85);
+  --faint:          hsla(0, 0%, 100%, 0.6);
 
   /* Shadows — soft and quiet, no glow */
   --shadow-card:    0 1px 2px hsla(0 0% 0% / 0.25), 0 10px 30px hsla(0 0% 0% / 0.16);
@@ -175,7 +175,7 @@ h3 { font-size: 18px; }
   top: 2px; bottom: 2px;
   left: 2px;
   width: calc(50% - 2px);
-  background: var(--accent);
+  background: var(--blue);
   border-radius: 5px;
   box-shadow: 0 1px 3px hsla(0 0% 0% / 0.35);
   transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1), background 0.22s ease;
@@ -184,7 +184,7 @@ h3 { font-size: 18px; }
 
 .mode-pill.real .mode-pill-thumb {
   transform: translateX(100%);
-  background: var(--danger);
+  background: var(--accent);
 }
 
 .mode-opt {
@@ -1144,7 +1144,8 @@ body.drag-over::after {
 .compare-btn {
   width: 100%;
   margin-top: 18px;
-  padding: 10px;
+  margin-bottom: 12px;
+  padding: 12px;
   font-size: 14px;
 }
 .compare-btn:disabled {

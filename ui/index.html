@@ -30,7 +30,7 @@
           <button type="button" class="mode-opt" data-mode="real">Real</button>
         </div>
         <button class="btn danger small" id="cancel-btn" hidden>Cancel</button>
-        <button class="btn primary" id="scan-btn">Scan</button>
+        <button class="btn success" id="scan-btn">Scan</button>
       </div>
     </header>
 
@@ -62,9 +62,8 @@
 
         <!-- Filters Panel -->
         <section class="panel" id="panel-filters" hidden>
-          <div class="panel-head collapsible" data-target="filters" role="button" tabindex="0" aria-expanded="true">
+          <div class="panel-head" id="head-filters">
             <h2>Filters</h2>
-            <span class="disclosure-arrow">▼</span>
           </div>
           <div class="panel-body" id="body-filters">
             <div class="filters">
@@ -87,9 +86,8 @@
 
         <!-- Compare Panel -->
         <section class="panel" id="panel-compare" hidden>
-          <div class="panel-head collapsible" data-target="compare" role="button" tabindex="0" aria-expanded="true">
+          <div class="panel-head" id="head-compare">
             <h2>Compare</h2>
-            <span class="disclosure-arrow">▼</span>
           </div>
           <div class="panel-body" id="body-compare">
             <p class="compare-desc">Find duplicates between two folders.</p>
@@ -124,9 +122,8 @@
 
         <!-- Memory Bank Panel -->
         <section class="panel" id="panel-memory" hidden>
-          <div class="panel-head collapsible" data-target="memory" role="button" tabindex="0" aria-expanded="true">
+          <div class="panel-head" id="head-memory">
             <h2>Memory Bank</h2>
-            <span class="disclosure-arrow">▼</span>
           </div>
           <div class="panel-body" id="body-memory">
             <dl class="kv" id="memory-stats">
@@ -140,9 +137,8 @@
 
         <!-- Composition Panel -->
         <section class="panel" id="panel-composition" hidden>
-          <div class="panel-head collapsible" data-target="composition" role="button" tabindex="0" aria-expanded="true">
+          <div class="panel-head" id="head-composition">
             <h2>Composition</h2>
-            <span class="disclosure-arrow">▼</span>
           </div>
           <div class="panel-body" id="body-composition">
             <div class="donut-wrap">
@@ -157,10 +153,9 @@
         </section>
 
         <!-- App Data Panel -->
-        <section class="panel collapsed" id="panel-appdata">
-          <div class="panel-head collapsible" data-target="appdata" role="button" tabindex="0" aria-expanded="false">
+        <section class="panel" id="panel-appdata">
+          <div class="panel-head" id="head-appdata">
             <h2>App Data</h2>
-            <span class="disclosure-arrow">▼</span>
           </div>
           <div class="panel-body" id="body-appdata">
             <ul class="paths" id="paths"></ul>

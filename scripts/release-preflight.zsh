@@ -169,7 +169,8 @@ $matches"
         "Log: $log_path" \
         "Built application at: $repo_root/target/release/rusty" \
         "$repo_root/target/release/bundle/macos/Rusty.app" \
-        "$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg"
+        "$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg" \
+        "$repo_root/dist/Rusty.dmg"
     do
         grep -Fq "$expected" "$log_path" \
             || fail "build log does not record expected Rusty output: $expected"
@@ -182,25 +183,22 @@ verify_bundle_outputs() {
     [[ -n "$version" ]] || fail "could not read Tauri version"
 
     local binary="$repo_root/target/release/rusty"
-    local app="$repo_root/target/release/bundle/macos/Rusty.app"
-    local app_binary="$app/Contents/MacOS/rusty"
-    local dmg="$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg"
+    local dist_app="$repo_root/dist/Rusty.app"
+    local dist_dmg="$repo_root/dist/Rusty.dmg"
+    local target_app="$repo_root/target/release/bundle/macos/Rusty.app"
+    local target_dmg="$repo_root/target/release/bundle/dmg/Rusty_${version}_aarch64.dmg"
 
     reject_stale_path "$binary" "release binary"
-    reject_stale_path "$app" "app bundle"
-    reject_stale_path "$app_binary" "app executable"
-    reject_stale_path "$dmg" "dmg bundle"
+    reject_stale_path "$dist_dmg" "dist dmg"
 
     [[ -x "$binary" ]] || fail "missing executable release binary: $binary"
-    [[ -d "$app" ]] || fail "missing app bundle: $app"
-    [[ -x "$app_binary" ]] || fail "missing app executable: $app_binary"
-    [[ ! -e "$app/Contents/MacOS/rustydups" ]] || fail "stale app executable exists: $app/Contents/MacOS/rustydups"
-    [[ -f "$dmg" ]] || fail "missing dmg bundle: $dmg"
+    [[ -f "$dist_dmg" ]] || fail "missing final DMG: $dist_dmg"
+    [[ ! -e "$dist_app" ]] || fail "app bundle should not be kept in dist/: $dist_app"
+    [[ ! -d "$target_app" ]] || fail "app bundle should not be kept in target/release/bundle/macos/: $target_app"
+    [[ ! -f "$target_dmg" ]] || fail "intermediate DMG should not be kept in target/release/bundle/dmg/: $target_dmg"
 
-    print "Verified bundle outputs:"
-    print "  $binary"
-    print "  $app"
-    print "  $dmg"
+    print "Verified final output:"
+    print "  $dist_dmg"
 }
 
 if [[ "$check_config" == true ]]; then

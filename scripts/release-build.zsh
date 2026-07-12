@@ -85,21 +85,19 @@ print "DMG built successfully."
 print "  $dmg_path"
 print ""
 
-"$repo_root/scripts/release-preflight.zsh" --verify-log "$log_path" --verify-bundles
-
-# Stage the verified artifacts into dist/ for easy access, matching the
-# workspace convention (dist/<Project>.dmg). The canonical, preflight-checked
-# outputs remain under target/release/bundle/; these are convenience copies.
-# Both are git-ignored (*.app, *.dmg) so they never land in version control.
-print ""
-print "Staging final artifacts into dist/..."
+# Stage the final DMG into dist/ and remove the intermediate .app bundle and
+# any extra DMGs so the workspace app folder contains exactly one DMG.
+print "Staging final artifact into dist/..."
 dist_dir="$repo_root/dist"
 mkdir -p "$dist_dir"
 rm -rf "$dist_dir/Rusty.app" "$dist_dir/Rusty.dmg"
-cp -R "$app_abs" "$dist_dir/Rusty.app"
 cp -f "$dmg_path" "$dist_dir/Rusty.dmg"
-print "  $dist_dir/Rusty.app"
+rm -rf "$app_abs"
+rm -f "$dmg_path"
 print "  $dist_dir/Rusty.dmg"
+
+print ""
+"$repo_root/scripts/release-preflight.zsh" --verify-log "$log_path" --verify-bundles
 
 print ""
 print "Finished: $(date)"

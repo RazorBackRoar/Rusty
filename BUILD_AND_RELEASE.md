@@ -38,14 +38,15 @@ cargo test --workspace
 zsh scripts/release-build.zsh
 ```
 
-Bundles land at:
+Bundle lands at:
 
 ```text
-target/release/bundle/macos/Rusty.app
-target/release/bundle/dmg/Rusty_*_aarch64.dmg
+dist/Rusty.dmg
 ```
 
-The Mach-O binary inside the app is named `rusty` (lowercase). Each release run
+The `.app` bundle and intermediate `Rusty_*_aarch64.dmg` under `target/release/bundle/`
+are removed during packaging; the workspace app folder contains only one DMG.
+The Mach-O binary inside the shipped app is named `rusty` (lowercase). Each release run
 writes a timestamped log under `build-logs/`.
 
 Preflight-only check:

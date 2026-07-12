@@ -32,7 +32,7 @@
   /* Window + surfaces */
   --bg-top:         hsl(225 8% 12%);
   --bg-bot:         hsl(225 9% 9%);
-  --surface:        hsla(225 7% 16% / 0.58);     /* translucent panel background */
+  --surface:        hsla(225 8% 13% / 0.78);     /* darker, more opaque panel background for readability */
   --surface-hover:  hsla(0 0% 100% / 0.08);
   --surface-solid:  hsl(225 7% 15%);
   --well:           hsla(0 0% 0% / 0.22);        /* inset wells (lists, logs) */
@@ -59,15 +59,13 @@
   --gap:  14px;
 }
 
-/* Inactive window state modifier — dim borders and text slightly */
+/* Inactive window state modifier — dim borders only to keep text highly readable */
 body.window-inactive {
-  --gold-line: hsla(38 18% 45% / 0.16);
-  --border: hsla(0 0% 100% / 0.06);
-  --text: hsl(220 5% 82%);
-  --muted: hsla(0 0% 100% / 0.45);
+  --gold-line: hsla(38 18% 45% / 0.22);
+  --border: hsla(0 0% 100% / 0.08);
 }
 body.window-inactive .toolbar {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 * { box-sizing: border-box; }

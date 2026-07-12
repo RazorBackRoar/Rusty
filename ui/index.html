@@ -38,79 +38,121 @@
     <main class="workspace">
       <!-- Sidebar -->
       <aside class="sidebar">
-        <section class="panel">
-          <div class="panel-head"><h2>Sources</h2></div>
-          <ul class="root-list" id="root-list" aria-label="Selected folders"></ul>
-          <div class="row centered">
-            <button class="btn primary small" id="pick-folder">+ Add Folder</button>
-            <button class="btn small" id="clear-folders">Clear</button>
-          </div>
-          <button class="btn ghost small remembered-toggle" id="remembered-toggle" type="button" aria-expanded="false" aria-controls="remembered">↺ Add from memory</button>
-          <div class="remembered" id="remembered" hidden></div>
-        </section>
+        <!-- Sidebar Mode Toggle -->
+        <div class="sidebar-mode-toggle" id="sidebar-mode-toggle" role="tablist" aria-label="Sidebar mode">
+          <button class="mode-btn active" data-mode="scan" role="tab" aria-selected="true">Scan</button>
+          <button class="mode-btn" data-mode="compare" role="tab" aria-selected="false">Compare</button>
+        </div>
 
-        <section class="panel">
-          <div class="panel-head"><h2>Filters</h2></div>
-          <div class="filters">
-            <label class="filter-check">
-              <input type="checkbox" id="skip-dev" checked />
-              <span>Skip dev / cache folders</span>
-            </label>
-            <label class="filter-row">
-              <span>Ignore under</span>
-              <input type="number" id="min-size-kb" min="0" step="1" value="0" />
-              <span>KB</span>
-            </label>
-            <label class="filter-stack">
-              <span>Exclude paths containing</span>
-              <input type="text" id="exclude" placeholder="/Backups/, .tmp" />
-            </label>
+        <!-- Sources Panel -->
+        <section class="panel" id="panel-sources">
+          <div class="panel-head collapsible" data-target="sources" role="button" tabindex="0" aria-expanded="true">
+            <h2>Sources</h2>
+            <span class="disclosure-arrow">▼</span>
           </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h2>Compare</h2></div>
-          <p class="compare-desc">Find duplicates between two folders.</p>
-          <div class="compare-zones">
-            <div class="compare-drop" id="compare-drop-1" data-slot="1" tabindex="0" role="button" aria-label="Select Folder 1">
-              <span class="compare-drop-icon">📁</span>
-              <span class="compare-drop-label">Folder 1</span>
-              <span class="compare-drop-hint">Click or drag here</span>
+          <div class="panel-body" id="body-sources">
+            <ul class="root-list" id="root-list" aria-label="Selected folders"></ul>
+            <div class="row centered">
+              <button class="btn primary small" id="pick-folder">+ Add Folder</button>
+              <button class="btn small" id="clear-folders">Clear</button>
             </div>
-            <div class="compare-drop" id="compare-drop-2" data-slot="2" tabindex="0" role="button" aria-label="Select Folder 2">
-              <span class="compare-drop-icon">📁</span>
-              <span class="compare-drop-label">Folder 2</span>
-              <span class="compare-drop-hint">Click or drag here</span>
-            </div>
+            <button class="btn ghost small remembered-toggle" id="remembered-toggle" type="button" aria-expanded="false" aria-controls="remembered">↺ Add from memory</button>
+            <div class="remembered" id="remembered" hidden></div>
           </div>
-          <button class="btn primary small compare-btn" id="compare-btn" disabled>Compare Folders</button>
         </section>
 
-        <section class="panel">
-          <div class="panel-head"><h2>Memory Bank</h2></div>
-          <dl class="kv" id="memory-stats">
-            <dt>Folders</dt><dd id="m-folders">0</dd>
-            <dt>File hashes</dt><dd id="m-files">0</dd>
-            <dt>Duplicate hashes</dt><dd id="m-hashes">0</dd>
-            <dt>Last scan</dt><dd id="m-lastscan">never</dd>
-          </dl>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h2>Composition</h2></div>
-          <div class="donut-wrap">
-            <canvas id="donut"></canvas>
-            <div class="donut-center" id="donut-center">
-              <span class="donut-big">–</span>
-              <span class="donut-small">wasted</span>
+        <!-- Filters Panel -->
+        <section class="panel" id="panel-filters">
+          <div class="panel-head collapsible" data-target="filters" role="button" tabindex="0" aria-expanded="true">
+            <h2>Filters</h2>
+            <span class="disclosure-arrow">▼</span>
+          </div>
+          <div class="panel-body" id="body-filters">
+            <div class="filters">
+              <label class="filter-check">
+                <input type="checkbox" id="skip-dev" checked />
+                <span>Skip dev / cache folders</span>
+              </label>
+              <label class="filter-row">
+                <span>Ignore under</span>
+                <input type="number" id="min-size-kb" min="0" step="1" value="0" />
+                <span>KB</span>
+              </label>
+              <label class="filter-stack">
+                <span>Exclude paths containing</span>
+                <input type="text" id="exclude" placeholder="/Backups/, .tmp" />
+              </label>
             </div>
           </div>
-          <ul class="legend" id="legend"></ul>
         </section>
 
-        <section class="panel">
-          <div class="panel-head"><h2>App Data</h2></div>
-          <ul class="paths" id="paths"></ul>
+        <!-- Compare Panel -->
+        <section class="panel" id="panel-compare" hidden>
+          <div class="panel-head collapsible" data-target="compare" role="button" tabindex="0" aria-expanded="true">
+            <h2>Compare</h2>
+            <span class="disclosure-arrow">▼</span>
+          </div>
+          <div class="panel-body" id="body-compare">
+            <p class="compare-desc">Find duplicates between two folders.</p>
+            <div class="compare-zones">
+              <div class="compare-drop" id="compare-drop-1" data-slot="1" tabindex="0" role="button" aria-label="Select Folder 1">
+                <span class="compare-drop-icon">📁</span>
+                <span class="compare-drop-label">Folder 1</span>
+                <span class="compare-drop-hint">Click or drag here</span>
+              </div>
+              <div class="compare-drop" id="compare-drop-2" data-slot="2" tabindex="0" role="button" aria-label="Select Folder 2">
+                <span class="compare-drop-icon">📁</span>
+                <span class="compare-drop-label">Folder 2</span>
+                <span class="compare-drop-hint">Click or drag here</span>
+              </div>
+            </div>
+            <button class="btn primary small compare-btn" id="compare-btn" disabled>Compare Folders</button>
+          </div>
+        </section>
+
+        <!-- Memory Bank Panel -->
+        <section class="panel" id="panel-memory">
+          <div class="panel-head collapsible" data-target="memory" role="button" tabindex="0" aria-expanded="true">
+            <h2>Memory Bank</h2>
+            <span class="disclosure-arrow">▼</span>
+          </div>
+          <div class="panel-body" id="body-memory">
+            <dl class="kv" id="memory-stats">
+              <dt>Folders</dt><dd id="m-folders">0</dd>
+              <dt>File hashes</dt><dd id="m-files">0</dd>
+              <dt>Duplicate hashes</dt><dd id="m-hashes">0</dd>
+              <dt>Last scan</dt><dd id="m-lastscan">never</dd>
+            </dl>
+          </div>
+        </section>
+
+        <!-- Composition Panel -->
+        <section class="panel" id="panel-composition">
+          <div class="panel-head collapsible" data-target="composition" role="button" tabindex="0" aria-expanded="true">
+            <h2>Composition</h2>
+            <span class="disclosure-arrow">▼</span>
+          </div>
+          <div class="panel-body" id="body-composition">
+            <div class="donut-wrap">
+              <canvas id="donut"></canvas>
+              <div class="donut-center" id="donut-center">
+                <span class="donut-big">–</span>
+                <span class="donut-small">wasted</span>
+              </div>
+            </div>
+            <ul class="legend" id="legend"></ul>
+          </div>
+        </section>
+
+        <!-- App Data Panel -->
+        <section class="panel" id="panel-appdata">
+          <div class="panel-head collapsible" data-target="appdata" role="button" tabindex="0" aria-expanded="true">
+            <h2>App Data</h2>
+            <span class="disclosure-arrow">▼</span>
+          </div>
+          <div class="panel-body" id="body-appdata">
+            <ul class="paths" id="paths"></ul>
+          </div>
         </section>
       </aside>
 

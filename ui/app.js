@@ -1251,6 +1251,43 @@ function setupBrandGestures() {
   });
 }
 
+
+// ----------------------------- sidebar enhancements ---------------------
+
+function setSidebarMode(mode) {
+  const isScan = mode === 'scan';
+  document.querySelectorAll('#sidebar-mode-toggle .mode-btn').forEach(btn => {
+    const active = btn.dataset.mode === mode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+  $('panel-sources').hidden = !isScan;
+  $('panel-filters').hidden = !isScan;
+  $('panel-compare').hidden = isScan;
+}
+
+function setupCollapsiblePanels() {
+  document.querySelectorAll('.panel-head.collapsible').forEach(head => {
+    const toggle = () => {
+      const panel = head.closest('.panel');
+      panel.classList.toggle('collapsed');
+      const expanded = !panel.classList.contains('collapsed');
+      head.setAttribute('aria-expanded', String(expanded));
+    };
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  });
+}
+
+// Window focus/blur tracking
+window.addEventListener('focus', () => document.body.classList.remove('window-inactive'));
+window.addEventListener('blur', () => document.body.classList.add('window-inactive'));
+
 // ----------------------------- boot ------------------------------------
 
 function setupConfirmInput() {
@@ -1277,6 +1314,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
   setupConfirmInput();
   setupBrandGestures();
+  setupCollapsiblePanels();
+
+  // Sidebar mode toggle click listeners
+  document.querySelectorAll('#sidebar-mode-toggle .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setSidebarMode(btn.dataset.mode));
+  });
 
   $('pick-folder').addEventListener('click', pickFolder);
   $('clear-folders').addEventListener('click', () => {

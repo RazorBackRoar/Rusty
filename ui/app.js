@@ -1262,7 +1262,6 @@ function setSidebarMode(mode) {
     btn.setAttribute('aria-selected', String(active));
   });
   $('panel-sources').hidden = !isScan;
-  $('panel-filters').hidden = !isScan;
   $('panel-compare').hidden = isScan;
 }
 

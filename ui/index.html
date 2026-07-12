@@ -94,18 +94,31 @@
           </div>
           <div class="panel-body" id="body-compare">
             <p class="compare-desc">Find duplicates between two folders.</p>
-            <div class="compare-zones">
-              <div class="compare-drop" id="compare-drop-1" data-slot="1" tabindex="0" role="button" aria-label="Select Folder 1">
+            
+            <div class="compare-slot" id="slot-1">
+              <div class="compare-drop slot-silver" id="compare-drop-1" data-slot="1" tabindex="0" role="button" aria-label="Select Folder 1">
                 <span class="compare-drop-icon">📁</span>
-                <span class="compare-drop-label">Folder 1</span>
+                <span class="compare-drop-label">Silver Folder</span>
                 <span class="compare-drop-hint">Click or drag here</span>
               </div>
-              <div class="compare-drop" id="compare-drop-2" data-slot="2" tabindex="0" role="button" aria-label="Select Folder 2">
-                <span class="compare-drop-icon">📁</span>
-                <span class="compare-drop-label">Folder 2</span>
-                <span class="compare-drop-hint">Click or drag here</span>
+              <div class="compare-meta">
+                <div class="meta-row"><span>Total Files:</span> <strong id="compare-files-1">0</strong></div>
+                <div class="meta-row"><span>Total Size:</span> <strong id="compare-size-1">0</strong></div>
               </div>
             </div>
+
+            <div class="compare-slot" id="slot-2">
+              <div class="compare-drop slot-gold" id="compare-drop-2" data-slot="2" tabindex="0" role="button" aria-label="Select Folder 2">
+                <span class="compare-drop-icon">📁</span>
+                <span class="compare-drop-label">Gold Folder</span>
+                <span class="compare-drop-hint">Click or drag here</span>
+              </div>
+              <div class="compare-meta">
+                <div class="meta-row"><span>Total Files:</span> <strong id="compare-files-2">0</strong></div>
+                <div class="meta-row"><span>Total Size:</span> <strong id="compare-size-2">0</strong></div>
+              </div>
+            </div>
+
             <button class="btn primary small compare-btn" id="compare-btn" disabled>Compare Folders</button>
           </div>
         </section>

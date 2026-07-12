@@ -972,11 +972,12 @@ function updateCompareButton() {
 function renderCompareZone(slot) {
   const zone = $(`compare-drop-${slot}`);
   const path = state.compareFolders[slot - 1];
+  const label = slot === 1 ? 'Silver Folder' : 'Gold Folder';
   if (path) {
     zone.classList.add('filled');
     zone.innerHTML = '';
     zone.appendChild(el('span', { class: 'compare-drop-icon' }, '📁'));
-    zone.appendChild(el('span', { class: 'compare-drop-label' }, `Folder ${slot}`));
+    zone.appendChild(el('span', { class: 'compare-drop-label' }, label));
     zone.appendChild(el('span', { class: 'compare-drop-path' }, path));
     zone.appendChild(
       el('button', {
@@ -984,6 +985,9 @@ function renderCompareZone(slot) {
         onClick: (e) => {
           e.stopPropagation();
           state.compareFolders[slot - 1] = null;
+          // Reset comparison stats
+          $(`compare-files-${slot}`).textContent = '0';
+          $(`compare-size-${slot}`).textContent = '0';
           renderCompareZone(slot);
           updateCompareButton();
         },
@@ -993,8 +997,8 @@ function renderCompareZone(slot) {
     zone.classList.remove('filled');
     zone.innerHTML = '';
     zone.appendChild(el('span', { class: 'compare-drop-icon' }, '📁'));
-    zone.appendChild(el('span', { class: 'compare-drop-label' }, `Folder ${slot}`));
-    zone.appendChild(el('span', { class: 'compare-drop-hint' }, 'Click or drag a folder here'));
+    zone.appendChild(el('span', { class: 'compare-drop-label' }, label));
+    zone.appendChild(el('span', { class: 'compare-drop-hint' }, 'Click or drag here'));
   }
 }
 
@@ -1048,10 +1052,15 @@ async function runComparison() {
   btn.textContent = 'Comparing…';
   btn.classList.add('scanning');
 
-  const results = $('duplicates');
-  results.innerHTML = '';
+  // Reset stats to 0 until the comparison scan finishes
+  $('compare-files-1').textContent = '0';
+  $('compare-size-1').textContent = '0';
+  $('compare-files-2').textContent = '0';
+  $('compare-size-2').textContent = '0';
 
   try {
+    const results = $('duplicates');
+    results.innerHTML = '';
     const resp = await invoke('run_scan', {
       request: {
         roots: [folder1, folder2],
@@ -1066,6 +1075,20 @@ async function runComparison() {
         commit_results: false,
       },
     });
+
+    // Update folder metadata metrics from scan results
+    if (resp.counters.per_folder && resp.counters.per_folder.length >= 2) {
+      const stats1 = resp.counters.per_folder[0];
+      const stats2 = resp.counters.per_folder[1];
+      if (stats1) {
+        $('compare-files-1').textContent = stats1.files_walked.toLocaleString();
+        $('compare-size-1').textContent = fmtBytes(stats1.bytes_walked);
+      }
+      if (stats2) {
+        $('compare-files-2').textContent = stats2.files_walked.toLocaleString();
+        $('compare-size-2').textContent = fmtBytes(stats2.bytes_walked);
+      }
+    }
 
     const groups = resp.report.groups;
 

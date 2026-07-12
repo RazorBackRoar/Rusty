@@ -60,9 +60,9 @@ zsh scripts/release-preflight.zsh --allow-other-root --check-config-only
 1. Ensure `main` is green (`cargo test --workspace` / CI).
 2. Confirm versions in `src-tauri/Cargo.toml` and `tauri.conf.json` match.
 3. Run `zsh scripts/release-build.zsh`.
-4. Smoke-test `Rusty.app` (scan, dry-run, quit). Use `pgrep -x rusty` in smoke
-   scripts (process name is lowercase).
-5. Publish a GitHub Release and attach the `.dmg`.
+4. Smoke-test by mounting `dist/Rusty.dmg` and dragging `Rusty.app` to `/Applications`.
+   Use `pgrep -x rusty` in smoke scripts (process name is lowercase).
+5. Publish a GitHub Release and attach `dist/Rusty.dmg`.
 6. Tag `vX.Y.Z` to match the Cargo version.
 
 ## Versioning Expectations

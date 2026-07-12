@@ -1058,6 +1058,10 @@ async function runComparison() {
         skip_dev_dirs: true,
         exclude: [],
         media_only: false,  // compare all files, not just media
+        // Do not replace the main scan's last_results / current_plan — Apply
+        // would otherwise quarantine compare-tab files while the Duplicates UI
+        // still showed the previous plan.
+        commit_results: false,
       },
     });
 

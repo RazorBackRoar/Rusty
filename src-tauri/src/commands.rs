@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
 
@@ -24,6 +25,10 @@ impl Drop for ScanGuard {
     }
 }
 
+fn default_commit_results() -> bool {
+    true
+}
+
 #[derive(Deserialize)]
 pub struct ScanRequest {
     pub roots: Vec<String>,
@@ -36,6 +41,30 @@ pub struct ScanRequest {
     pub exclude: Option<Vec<String>>, // case-insensitive path substrings to skip
     #[serde(default)]
     pub media_only: Option<bool>, // default true for the Tauri app: photos/videos only
+    /// When false, return the report without replacing `last_results` /
+    /// `current_plan`. Used by Folder Compare so a side-by-side scan cannot
+    /// silently retarget a pending Apply Plan.
+    #[serde(default = "default_commit_results")]
+    pub commit_results: bool,
+}
+
+/// Stash scan output for later apply/export, or leave the session untouched.
+///
+/// Compare-tab scans must pass `commit_results = false`; otherwise Apply would
+/// move files from the compare roots while the Duplicates UI still showed the
+/// previous plan.
+fn commit_scan_session(
+    commit_results: bool,
+    last_results: &Mutex<Option<LastResults>>,
+    current_plan: &Mutex<Vec<PlanEntry>>,
+    session: LastResults,
+    plan: Vec<PlanEntry>,
+) {
+    if !commit_results {
+        return;
+    }
+    *last_results.lock() = Some(session);
+    *current_plan.lock() = plan;
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -247,15 +276,21 @@ pub async fn run_scan(
         ));
     }
 
-    // Stash for later "apply" calls.
-    *state.last_results.lock() = Some(LastResults {
-        report: report.clone(),
-        counters: counters.clone(),
-        roots: roots.clone(),
-        mode: mode.to_string(),
-        scan_id,
-    });
-    *state.current_plan.lock() = dedupe::default_plan(&report);
+    // Stash for later "apply" calls — unless this was a non-committing probe
+    // (Folder Compare), which must not retarget a pending quarantine plan.
+    commit_scan_session(
+        request.commit_results,
+        &state.last_results,
+        &state.current_plan,
+        LastResults {
+            report: report.clone(),
+            counters: counters.clone(),
+            roots: roots.clone(),
+            mode: mode.to_string(),
+            scan_id,
+        },
+        dedupe::default_plan(&report),
+    );
 
     Ok(ScanResponse {
         mode: mode.to_string(),
@@ -609,5 +644,94 @@ fn csv_escape(s: &str) -> String {
         format!("\"{escaped}\"")
     } else {
         s.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dedupe::PlanAction;
+
+    fn sample_plan(path: &str) -> Vec<PlanEntry> {
+        vec![PlanEntry {
+            hash: "abc".into(),
+            path: path.into(),
+            normalized_path: path.to_lowercase(),
+            size: 10,
+            action: PlanAction::Quarantine,
+            reason: "test".into(),
+        }]
+    }
+
+    fn sample_session(scan_id: i64, root: &str) -> LastResults {
+        LastResults {
+            report: DedupeReport {
+                groups: vec![],
+                total_files: 0,
+                total_duplicate_files: 0,
+                total_wasted_bytes: 0,
+                largest_single_file_in_dup: 0,
+                duplicate_dirs: vec![],
+            },
+            counters: ScanCounters::default(),
+            roots: vec![PathBuf::from(root)],
+            mode: "real".into(),
+            scan_id,
+        }
+    }
+
+    #[test]
+    fn scan_request_defaults_commit_results_true() {
+        let req: ScanRequest =
+            serde_json::from_str(r#"{"roots":["/photos"],"mode":"real"}"#).unwrap();
+        assert!(req.commit_results);
+    }
+
+    #[test]
+    fn scan_request_accepts_commit_results_false() {
+        let req: ScanRequest = serde_json::from_str(
+            r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#,
+        )
+        .unwrap();
+        assert!(!req.commit_results);
+    }
+
+    #[test]
+    fn compare_scan_must_not_replace_pending_apply_plan() {
+        let last_results = Mutex::new(Some(sample_session(1, "/photos")));
+        let current_plan = Mutex::new(sample_plan("/photos/dup.jpg"));
+
+        commit_scan_session(
+            false,
+            &last_results,
+            &current_plan,
+            sample_session(2, "/downloads"),
+            sample_plan("/downloads/other.jpg"),
+        );
+
+        let kept = last_results.lock().clone().expect("session kept");
+        assert_eq!(kept.scan_id, 1);
+        assert_eq!(kept.roots, vec![PathBuf::from("/photos")]);
+        assert_eq!(current_plan.lock().len(), 1);
+        assert_eq!(current_plan.lock()[0].path, "/photos/dup.jpg");
+    }
+
+    #[test]
+    fn normal_scan_replaces_pending_apply_plan() {
+        let last_results = Mutex::new(Some(sample_session(1, "/photos")));
+        let current_plan = Mutex::new(sample_plan("/photos/dup.jpg"));
+
+        commit_scan_session(
+            true,
+            &last_results,
+            &current_plan,
+            sample_session(2, "/downloads"),
+            sample_plan("/downloads/other.jpg"),
+        );
+
+        let kept = last_results.lock().clone().expect("session replaced");
+        assert_eq!(kept.scan_id, 2);
+        assert_eq!(kept.roots, vec![PathBuf::from("/downloads")]);
+        assert_eq!(current_plan.lock()[0].path, "/downloads/other.jpg");
     }
 }

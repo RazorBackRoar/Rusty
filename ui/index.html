@@ -69,6 +69,24 @@
         </section>
 
         <section class="panel">
+          <div class="panel-head"><h2>Compare</h2></div>
+          <p class="compare-desc">Find duplicates between two folders.</p>
+          <div class="compare-zones">
+            <div class="compare-drop" id="compare-drop-1" data-slot="1" tabindex="0" role="button" aria-label="Select Folder 1">
+              <span class="compare-drop-icon">📁</span>
+              <span class="compare-drop-label">Folder 1</span>
+              <span class="compare-drop-hint">Click or drag here</span>
+            </div>
+            <div class="compare-drop" id="compare-drop-2" data-slot="2" tabindex="0" role="button" aria-label="Select Folder 2">
+              <span class="compare-drop-icon">📁</span>
+              <span class="compare-drop-label">Folder 2</span>
+              <span class="compare-drop-hint">Click or drag here</span>
+            </div>
+          </div>
+          <button class="btn primary small compare-btn" id="compare-btn" disabled>Compare Folders</button>
+        </section>
+
+        <section class="panel">
           <div class="panel-head"><h2>Memory Bank</h2></div>
           <dl class="kv" id="memory-stats">
             <dt>Folders</dt><dd id="m-folders">0</dd>
@@ -107,7 +125,6 @@
           <button class="tab active" data-tab="files">Files</button>
           <button class="tab" data-tab="duplicates">Duplicates</button>
           <button class="tab" data-tab="logs">Logs</button>
-          <button class="tab" data-tab="compare">Compare</button>
         </div>
 
         <!-- Shown only in Real mode when the plan has items to quarantine -->
@@ -158,26 +175,6 @@
             </div>
           </div>
 
-          <div class="tab-panel" id="panel-compare">
-            <div class="compare-section">
-              <h3 class="compare-heading">Folder Comparison</h3>
-              <p class="compare-desc">Drop two folders to find duplicate files between them. Both folders are scanned recursively.</p>
-              <div class="compare-zones">
-                <div class="compare-drop" id="compare-drop-1" data-slot="1" tabindex="0" role="button" aria-label="Select Folder 1">
-                  <span class="compare-drop-icon">📁</span>
-                  <span class="compare-drop-label">Folder 1</span>
-                  <span class="compare-drop-hint">Click or drag a folder here</span>
-                </div>
-                <div class="compare-drop" id="compare-drop-2" data-slot="2" tabindex="0" role="button" aria-label="Select Folder 2">
-                  <span class="compare-drop-icon">📁</span>
-                  <span class="compare-drop-label">Folder 2</span>
-                  <span class="compare-drop-hint">Click or drag a folder here</span>
-                </div>
-              </div>
-              <button class="btn primary compare-btn" id="compare-btn" disabled>Compare Folders</button>
-              <div class="compare-results" id="compare-results"></div>
-            </div>
-          </div>
 
           <!-- Loading state -->
           <div class="loading-veil" id="loading-veil" hidden>

@@ -1012,26 +1012,28 @@ async function pickCompareFolder(slot) {
 }
 
 // Attempt to route a Tauri drag-drop event to a compare drop zone.
-// Returns true if the drop was consumed (compare tab active + hit a zone).
+// Returns true if the drop was consumed (hit an empty compare zone).
+// Only intercepts when the user has already started filling compare zones
+// (one slot occupied, the other empty) — otherwise drops go to Sources.
 function tryCompareZoneDrop(paths) {
-  const compareTab = document.querySelector('.tab[data-tab="compare"]');
-  if (!compareTab || !compareTab.classList.contains('active')) return false;
   if (!paths || paths.length === 0) return false;
+  // Only intercept when exactly one slot is filled (user is mid-comparison setup)
+  const has1 = !!state.compareFolders[0];
+  const has2 = !!state.compareFolders[1];
+  if (has1 === has2) return false; // both empty or both filled — don't intercept
 
-  // Fill the first empty slot
   const path = paths[0];
-  if (!state.compareFolders[0]) {
+  if (!has1) {
     state.compareFolders[0] = path;
     renderCompareZone(1);
     updateCompareButton();
     return true;
-  } else if (!state.compareFolders[1]) {
+  } else {
     state.compareFolders[1] = path;
     renderCompareZone(2);
     updateCompareButton();
     return true;
   }
-  return false;
 }
 
 async function runComparison() {
@@ -1046,7 +1048,7 @@ async function runComparison() {
   btn.textContent = 'Comparing…';
   btn.classList.add('scanning');
 
-  const results = $('compare-results');
+  const results = $('duplicates');
   results.innerHTML = '';
 
   try {
@@ -1086,6 +1088,13 @@ async function runComparison() {
       // Render groups using existing renderer
       groups.forEach((g, idx) => results.appendChild(renderGroup(g, idx)));
     }
+    // Switch to Duplicates tab to show results
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === 'duplicates');
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'panel-duplicates');
+    });
   } catch (err) {
     if (!isCancelError(err)) {
       showError(err);
@@ -1095,6 +1104,13 @@ async function runComparison() {
           el('span', { class: 'compare-empty-text' }, err?.message ?? String(err))
         )
       );
+      // Switch to Duplicates tab to show the error
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === 'duplicates');
+      });
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.toggle('active', p.id === 'panel-duplicates');
+      });
     }
   } finally {
     state.compareRunning = false;
@@ -1106,7 +1122,7 @@ async function runComparison() {
 
 // ----------------------------- tabs ------------------------------------
 
-const TAB_TITLES = { files: 'Files', duplicates: 'Duplicates', logs: 'Logs', compare: 'Compare' };
+const TAB_TITLES = { files: 'Files', duplicates: 'Duplicates', logs: 'Logs' };
 
 function setupTabs() {
   document.querySelectorAll('.tab').forEach((tab) => {
@@ -1308,7 +1324,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.__TAURI__.event.listen('tauri://drag-drop', (ev) => {
       document.body.classList.remove('drag-over');
       const paths = ev.payload?.paths || [];
-      // If the Compare tab is active, try to route the drop to a compare zone first.
+      // Try to fill an empty compare zone first (sidebar-based, always available).
       if (tryCompareZoneDrop(paths)) return;
       let added = false;
       for (const p of paths) {

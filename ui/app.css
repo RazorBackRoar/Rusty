@@ -1190,30 +1190,33 @@ body.drag-over::after {
 .compare-slot {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 32px;
 }
 .compare-meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;                  /* spaces out the metadata rows */
   background: var(--well);
   border: 1px solid var(--border-light);
   border-radius: var(--r-sm);
-  padding: 8px 12px;
+  padding: 12px 16px;         /* larger padding box */
 }
 .meta-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
+  font-size: 14.5px;          /* larger text size */
 }
 .meta-row span {
   color: var(--muted);
+  font-weight: 500;
 }
 .meta-row strong {
+  font-size: 16px;            /* even larger strong values */
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--text);
+  font-weight: 700;
 }
 
 /* Slot distinct colors */

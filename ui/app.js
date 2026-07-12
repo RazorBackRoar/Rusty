@@ -972,7 +972,7 @@ function updateCompareButton() {
 function renderCompareZone(slot) {
   const zone = $(`compare-drop-${slot}`);
   const path = state.compareFolders[slot - 1];
-  const label = slot === 1 ? 'Silver Folder' : 'Gold Folder';
+  const label = slot === 1 ? 'Folder 1' : 'Folder 2';
   if (path) {
     zone.classList.add('filled');
     zone.innerHTML = '';

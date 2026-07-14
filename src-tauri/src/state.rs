@@ -21,6 +21,8 @@ pub struct AppState {
     pub scan_running: Arc<AtomicBool>,
     /// Set to true by `cancel_scan` to interrupt an in-progress scan.
     pub cancel: Arc<AtomicBool>,
+    /// True while `apply_plan` is moving files to quarantine.
+    pub apply_running: Arc<AtomicBool>,
     pub last_results: Mutex<Option<LastResults>>,
     pub current_plan: Mutex<Vec<PlanEntry>>,
 }
@@ -60,6 +62,7 @@ pub fn setup_app_state(app: &mut tauri::App) -> Result<(), Box<dyn std::error::E
         logs,
         scan_running: Arc::new(AtomicBool::new(false)),
         cancel: Arc::new(AtomicBool::new(false)),
+        apply_running: Arc::new(AtomicBool::new(false)),
         last_results: Mutex::new(None),
         current_plan: Mutex::new(Vec::new()),
     });

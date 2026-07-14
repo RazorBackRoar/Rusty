@@ -25,6 +25,14 @@ impl Drop for ScanGuard {
     }
 }
 
+struct ApplyGuard(Arc<AtomicBool>);
+
+impl Drop for ApplyGuard {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::SeqCst);
+    }
+}
+
 fn default_commit_results() -> bool {
     true
 }
@@ -147,6 +155,12 @@ pub async fn run_scan(
     if state.scan_running.swap(true, Ordering::SeqCst) {
         return Err(AppError::ScanAlreadyRunning);
     }
+    if state.apply_running.load(Ordering::SeqCst) {
+        state.scan_running.store(false, Ordering::SeqCst);
+        return Err(AppError::BadInput(
+            "cannot scan while quarantine apply is in progress".into(),
+        ));
+    }
     let _guard = ScanGuard(state.scan_running.clone());
     let dry_run = mode == "dry";
     if dry_run {
@@ -171,7 +185,9 @@ pub async fn run_scan(
     let scan_id = state.memory.start_scan(mode, &request.roots)?;
 
     // Reset the cancellation flag and grab a live Arc for the worker thread.
-    state.cancel.store(false, Ordering::SeqCst);
+    if !state.apply_running.load(Ordering::SeqCst) {
+        state.cancel.store(false, Ordering::SeqCst);
+    }
     let cancel_arc = state.cancel.clone();
 
     // Always exclude the app's own data directory so quarantined files are
@@ -425,6 +441,8 @@ pub async fn apply_plan(
 
     // Fresh cancel flag so "Cancel Remaining" only affects this apply, and run
     // the moves off the async runtime so the UI (and cancel) stay responsive.
+    state.apply_running.store(true, Ordering::SeqCst);
+    let _apply_guard = ApplyGuard(state.apply_running.clone());
     state.cancel.store(false, Ordering::SeqCst);
     let plan_for_task = plan.clone();
     let data = state.data.clone();

@@ -1,0 +1,29 @@
+{
+  "transcripts": {
+    "/Users/home/.cursor/projects/Users-home-Workspace-Apps-Rusty/agent-transcripts/a82ee641-d9f0-40f9-a1f9-2a06b985f5e3/a82ee641-d9f0-40f9-a1f9-2a06b985f5e3.jsonl": {
+      "mtimeMs": 1783638152248.4207,
+      "size": 330433
+    },
+    "/Users/home/.cursor/projects/Users-home-Workspace-Apps-Rusty/agent-transcripts/a82ee641-d9f0-40f9-a1f9-2a06b985f5e3/subagents/eb25c4ba-7134-44a9-a847-b2f70b7e9743.jsonl": {
+      "mtimeMs": 1783637672383.1978,
+      "size": 19759
+    },
+    "/Users/home/.cursor/projects/Users-home-Workspace-Apps-Rusty/agent-transcripts/cb323d0d-ea36-4376-ab5a-12f32993f39d/cb323d0d-ea36-4376-ab5a-12f32993f39d.jsonl": {
+      "mtimeMs": 1784341711282.8909,
+      "size": 24498
+    },
+    "/Users/home/.cursor/projects/Users-home-Workspace-Apps-Rusty/agent-transcripts/cb323d0d-ea36-4376-ab5a-12f32993f39d/subagents/dbc4cba1-b706-41e0-aaac-7bdeededba61.jsonl": {
+      "mtimeMs": 1784341767024.6758,
+      "size": 5047
+    },
+    "/Users/home/.cursor/projects/Users-home-Workspace-Apps/agent-transcripts/03b841f6-086e-426d-89f2-2ea9cede59a8/03b841f6-086e-426d-89f2-2ea9cede59a8.jsonl": {
+      "mtimeMs": 1783634783676.9424,
+      "size": 64751
+    },
+    "/Users/home/.cursor/projects/Users-home-Workspace-Apps/agent-transcripts/b81c58ea-d229-462a-9eed-c931c079c995/b81c58ea-d229-462a-9eed-c931c079c995.jsonl": {
+      "mtimeMs": 1784341012521.0588,
+      "size": 1616
+    }
+  },
+  "version": 1
+}

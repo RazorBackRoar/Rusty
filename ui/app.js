@@ -18,6 +18,7 @@ const state = {
   lastManifest: null,  // manifest path of the most recent apply, for undo
   compareFolders: [null, null],  // [folder1_path, folder2_path]
   compareRunning: false,
+  compareViewActive: false,  // Duplicates panel shows compare results (not main scan)
 };
 
 // ----------------------------- DOM helpers -----------------------------
@@ -461,6 +462,7 @@ function renderFiles(r) {
 }
 
 function renderDuplicates(r) {
+  state.compareViewActive = false;
   const groups = r.report.groups;
   $('dups-empty').style.display = groups.length ? 'none' : '';
   if (!groups.length) {
@@ -489,26 +491,34 @@ function renderDupDir(d) {
   );
 }
 
-function renderGroup(g, idx) {
+function renderGroup(g, idx, { readOnly = false } = {}) {
   const body = el('div', { class: 'group-body' });
   for (const f of g.files) {
-    const planEntry = state.plan.find((p) => p.normalized_path === f.normalized_path);
+    const planEntry = readOnly
+      ? null
+      : state.plan.find((p) => p.normalized_path === f.normalized_path);
     const action = planEntry?.action ?? 'quarantine';
-    body.appendChild(
-      el('div', { class: 'file-row' },
-        el('span', { class: `file-action ${action}` }, action.toUpperCase()),
-        el('div', {},
-          el('div', { class: 'file-path' }, f.path),
-          el('div', { class: 'file-meta' },
-            `${fmtBytes(f.size)} · source: ${f.source_root}${f.moved_from ? ` · moved from ${f.moved_from}` : ''}${f.reused_from_cache ? ' · cache hit' : ''}`
-          )
-        ),
+    const row = el('div', { class: 'file-row' });
+    if (!readOnly) {
+      row.appendChild(el('span', { class: `file-action ${action}` }, action.toUpperCase()));
+    }
+    row.appendChild(
+      el('div', {},
+        el('div', { class: 'file-path' }, f.path),
+        el('div', { class: 'file-meta' },
+          `${fmtBytes(f.size)} · source: ${f.source_root}${f.moved_from ? ` · moved from ${f.moved_from}` : ''}${f.reused_from_cache ? ' · cache hit' : ''}`
+        )
+      )
+    );
+    if (!readOnly) {
+      row.appendChild(
         el('button', {
           class: 'file-toggle',
           onClick: () => togglePlanAction(f.normalized_path),
         }, action === 'keep' ? 'quarantine' : 'keep')
-      )
-    );
+      );
+    }
+    body.appendChild(row);
   }
   const header = el('div', { class: 'group-header', onClick: (e) => {
     if (e.target.closest('.file-toggle')) return;
@@ -657,13 +667,15 @@ function renderPlan() {
     plan.length === 0
       ? 'No plan yet. Run a scan first.'
       : `${toKeep.length} keep · ${toQuar.length} quarantine · ${fmtBytes(toQuar.reduce((a, b) => a + b.size, 0))} to free`;
-  $('apply-plan-btn').disabled = state.mode !== 'real' || toQuar.length === 0;
+  $('apply-plan-btn').disabled =
+    state.compareViewActive || state.mode !== 'real' || toQuar.length === 0;
   updatePlanBar();
 }
 
 function updatePlanBar() {
   const toQuar = state.plan.filter((p) => p.action === 'quarantine');
-  $('plan-action-bar').hidden = state.mode !== 'real' || toQuar.length === 0;
+  $('plan-action-bar').hidden =
+    state.compareViewActive || state.mode !== 'real' || toQuar.length === 0;
 }
 
 async function cancelScan() {
@@ -1091,6 +1103,8 @@ async function runComparison() {
     }
 
     const groups = resp.report.groups;
+    state.compareViewActive = true;
+    updatePlanBar();
 
     if (groups.length === 0) {
       results.appendChild(
@@ -1112,8 +1126,8 @@ async function runComparison() {
           ` wasted.`
         )
       );
-      // Render groups using existing renderer
-      groups.forEach((g, idx) => results.appendChild(renderGroup(g, idx)));
+      // Render groups read-only — compare does not commit a quarantine plan.
+      groups.forEach((g, idx) => results.appendChild(renderGroup(g, idx, { readOnly: true })));
     }
     // Switch to Duplicates tab to show results
     document.querySelectorAll('.tab').forEach(t => {
@@ -1123,6 +1137,8 @@ async function runComparison() {
       p.classList.toggle('active', p.id === 'panel-duplicates');
     });
   } catch (err) {
+    state.compareViewActive = true;
+    updatePlanBar();
     if (!isCancelError(err)) {
       showError(err);
       results.appendChild(

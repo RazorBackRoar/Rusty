@@ -37,7 +37,7 @@ thiserror = "1"
 parking_lot = "0.12"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 uuid = { version = "1", features = ["v4"] }
-window-vibrancy = "0.7.1"
+window-vibrancy = "0.8.0"
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 
 [dev-dependencies]

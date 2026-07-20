@@ -510,6 +510,54 @@ fn min_size_and_exclude_filters_apply() {
 }
 
 #[test]
+fn quarantine_output_path_is_excluded_from_rescan() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = temp.path().join("workspace");
+    let library = workspace.join("Pictures");
+    let quarantine = workspace.join("Quarantine");
+    fs::create_dir_all(&library).unwrap();
+    fs::create_dir_all(&quarantine).unwrap();
+    let payload = vec![9u8; 5000];
+    fs::write(library.join("photo.jpg"), &payload).unwrap();
+    fs::write(quarantine.join("photo.jpg"), &payload).unwrap();
+
+    let data = make_data_dir(&temp.path().to_path_buf());
+    let memory = MemoryBank::open(&data.memory_db).unwrap();
+    let logs = LogSink::new(data.current_log_path());
+    let cancel = Arc::new(AtomicBool::new(false));
+    let quarantine_root = crate::paths::normalize_for_storage(&quarantine).to_lowercase();
+    let opts = scanner::ScanOptions {
+        min_size: 0,
+        skip_dev_dirs: false,
+        exclude: vec![quarantine_root],
+        media_only: false,
+        follow_symlinks: false,
+    };
+    let scan_id = memory
+        .start_scan("dry", &[workspace.to_string_lossy().into()])
+        .unwrap();
+    let (files, _) = scanner::scan_roots_with_options(
+        &[workspace.clone()],
+        &memory,
+        &logs,
+        &cancel,
+        scan_id,
+        &opts,
+    )
+    .unwrap();
+
+    assert!(
+        files.iter().all(|f| !f.path.contains("Quarantine")),
+        "quarantine output must be skipped so copies are not regrouped with originals"
+    );
+    let report = dedupe::group_duplicates(&files);
+    assert!(
+        report.groups.is_empty(),
+        "library and quarantine copies must not be grouped when quarantine is excluded"
+    );
+}
+
+#[test]
 fn unique_files_are_full_hashed_once_then_reused() {
     let temp = tempfile::tempdir().unwrap();
     let src = temp.path().join("src");

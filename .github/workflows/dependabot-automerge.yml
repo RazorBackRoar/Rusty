@@ -21,6 +21,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -34,5 +35,40 @@ jobs:
             echo "Skipping non-Dependabot PR #${pr_number}."
             exit 0
           fi
+          head_ref_oid=$(gh pr view "${pr_number}" --repo "${REPOSITORY}" --json headRefOid -q '.headRefOid')
+          if [ "${head_ref_oid}" != "${HEAD_SHA}" ]; then
+            echo "Skipping PR #${pr_number}; CI passed for ${HEAD_SHA}, but branch is now ${head_ref_oid}."
+            exit 0
+          fi
+
+          merge_state=$(gh pr view "${pr_number}" --repo "${REPOSITORY}" --json mergeStateStatus -q '.mergeStateStatus')
+          if [ "${merge_state}" = "BEHIND" ]; then
+            echo "PR #${pr_number} is behind main; updating branch for a fresh CI run."
+            gh pr update-branch "${pr_number}" --repo "${REPOSITORY}" || true
+            exit 0
+          fi
+
+          attempts=0
+          max_attempts=30
+          while [ "${attempts}" -lt "${max_attempts}" ]; do
+            merge_state=$(gh pr view "${pr_number}" --repo "${REPOSITORY}" --json mergeStateStatus -q '.mergeStateStatus')
+            if [ "${merge_state}" = "BEHIND" ]; then
+              echo "PR #${pr_number} fell behind main; updating branch for a fresh CI run."
+              gh pr update-branch "${pr_number}" --repo "${REPOSITORY}" || true
+              exit 0
+            fi
+            if [ "${merge_state}" = "CLEAN" ]; then
+              break
+            fi
+            attempts=$((attempts + 1))
+            echo "Waiting for required checks (mergeStateStatus=${merge_state}, attempt ${attempts}/${max_attempts})..."
+            sleep 10
+          done
+
+          if [ "${merge_state}" != "CLEAN" ]; then
+            echo "PR #${pr_number} is not ready to merge (mergeStateStatus=${merge_state})."
+            exit 0
+          fi
+
           gh pr merge "${pr_number}" --repo "${REPOSITORY}" --squash
           echo "Merged PR #${pr_number}."

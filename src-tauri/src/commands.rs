@@ -174,11 +174,17 @@ pub async fn run_scan(
     state.cancel.store(false, Ordering::SeqCst);
     let cancel_arc = state.cancel.clone();
 
-    // Always exclude the app's own data directory so quarantined files are
-    // never re-walked on the next scan and reported as MOVED.
+    // Always exclude the app's own data directory and the quarantine output
+    // folder so quarantined copies are never re-walked and grouped with live
+    // originals on the next scan.
     let mut exclude = request.exclude.clone().unwrap_or_default();
     let data_root = crate::paths::normalize_for_storage(&state.data.root).to_lowercase();
     exclude.push(data_root);
+    let quarantine_root =
+        crate::paths::normalize_for_storage(&state.data.quarantine_out_dir).to_lowercase();
+    if !quarantine_root.is_empty() {
+        exclude.push(quarantine_root);
+    }
 
     let options = scanner::ScanOptions {
         min_size: request.min_size.unwrap_or(0).max(0),

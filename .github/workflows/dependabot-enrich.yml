@@ -1,8 +1,7 @@
 name: Dependabot enrich
 
 on:
-  pull_request_target:
-    branches: [main]
+  pull_request:
     types: [opened, reopened, synchronize]
 
 permissions:

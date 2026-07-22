@@ -1,7 +1,8 @@
 name: Dependabot enrich
 
 on:
-  pull_request:
+  pull_request_target:
+    branches: [main]
     types: [opened, reopened, synchronize]
 
 permissions:
@@ -33,6 +34,8 @@ jobs:
           DEPENDABOT_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
           DEPENDABOT_DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
           DEPENDABOT_UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEPENDABOT_DEPENDENCY_GROUP: ${{ steps.metadata.outputs.dependency-group }}
+          DEPENDABOT_UPDATED_DEPENDENCIES_JSON: ${{ steps.metadata.outputs.updated-dependencies-json }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           python .github/scripts/enrich-dependabot-pr.py \

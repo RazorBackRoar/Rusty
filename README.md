@@ -1,17 +1,23 @@
 # Rusty
 
+[![Download](https://img.shields.io/github/v/release/RazorBackRoar/Rusty?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/Rusty/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Rusty/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.2.1-blue?style=for-the-badge)](Cargo.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-2021-e8710a?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Tauri](https://img.shields.io/badge/Tauri-f5c518?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
-<!-- Workspace Health Layer -->
-[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)]()
-[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)]()
+**Safe, native macOS duplicate photo and video finder.**
 
-> **TL;DR:** Safe, native macOS duplicate photo and video finder. Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
+Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
+
+<p align="center">
+  <a href="https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg"><strong>↓ Download Rusty.dmg</strong></a>
+  ·
+  <a href="https://github.com/RazorBackRoar/Rusty/releases">All releases</a>
+</p>
+
+![Rusty](docs/screenshots/app.png)
 
 A safe, native macOS **duplicate photo & video finder**. Tauri frontend, Rust
 backend, with a persistent hash cache so re-scanning the same folders (or an
@@ -402,7 +408,7 @@ The Mach-O binary inside the app is named `rusty` (lowercase).
 
 ### Install from release
 
-1. Download the latest `.dmg` from [Releases](https://github.com/RazorBackRoar/Rusty/releases)
+1. Download [`Rusty.dmg`](https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg)
 2. Open the DMG and drag `Rusty.app` to `/Applications`
 3. First launch — right-click → **Open** if Gatekeeper blocks the ad-hoc signed build
 

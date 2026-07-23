@@ -123,7 +123,7 @@ expected = {
     "bundle.active": (bundle.get("active"), True),
     "bundle.targets": (bundle.get("targets"), ["app"]),
     "bundle.macOS.signingIdentity": (macos.get("signingIdentity"), "-"),
-    "dmg.windowSize": (dmg.get("windowSize"), {"width": 500, "height": 360}),
+    "dmg.windowSize": (dmg.get("windowSize"), {"width": 500, "height": 420}),
     "dmg.appPosition": (dmg.get("appPosition"), {"x": 130, "y": 160}),
     "dmg.applicationFolderPosition": (
         dmg.get("applicationFolderPosition"),

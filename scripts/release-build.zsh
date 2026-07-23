@@ -30,9 +30,12 @@ fi
 cargo tauri build
 print ""
 
+# Dynamic-year RazorBackRoar copyright in Info.plist (does not touch DMG layout).
+app_abs="$repo_root/target/release/bundle/macos/Rusty.app"
+"$repo_root/../.razorcore/patch-app-branding.sh" "$app_abs"
+
 # Build the DMG with the same shared dmgbuild layout as the Python apps.
 dmg_settings="$repo_root/../.razorcore/dmg-settings.py"
-app_abs="$repo_root/target/release/bundle/macos/Rusty.app"
 version="$(sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$repo_root/src-tauri/tauri.conf.json" | head -n 1)"
 [[ -n "$version" ]] || {
     print "Error: could not read the Tauri app version."

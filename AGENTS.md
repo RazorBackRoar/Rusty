@@ -50,9 +50,15 @@ Run `cargo test --workspace` before claiming success on any change.
 
 These behaviors are the product. Do not change them unless explicitly requested:
 
-- **Exact duplicates only**: detection is by BLAKE3 content hash. Never add
-  fuzzy, same-name, visual-similarity, or metadata-only matching to the
-  duplicate plan.
+- **Exact duplicates only (Duplicates tab / Real mode)**: detection is by
+  BLAKE3 content hash. Never add fuzzy, same-name, visual-similarity, or
+  metadata-only matching to the exact-duplicate plan or silent Real-mode
+  quarantine automation.
+- **Similar is a separate review-only path**: rotation-normalized frame
+  perceptual hashes (sample frames, apply display/rotation, compare
+  90°/180°/270° variants) may power a fourth results tab —
+  `Files · Duplicates · Similar · Logs`. Similar never silent-moves in Real
+  mode; keep it review-only or confirm-before-quarantine.
 - **Dry mode is the default** and must never delete, move, rename, or modify
   user files. Dry still saves valid hashes to the cache — keep that.
 - **Real mode never deletes**: it moves confirmed duplicates to

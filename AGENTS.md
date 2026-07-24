@@ -21,7 +21,7 @@ Behavioral SSOT for cross-app contracts: `../Docs/razorcore-api-spec.md`
 ## Identifiers and paths
 
 | Surface | Value |
-|---------|-------|
+| --- | --- |
 | Bundle ID | `com.rusty.desktop` (legacy: `com.rusty.app`) |
 | Binary / process name | `rusty` (lowercase — use `pgrep -x rusty`) |
 | App support | `~/Library/Application Support/com.rusty.desktop/` |

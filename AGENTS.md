@@ -12,7 +12,8 @@ apply. Use `cargo`.
 - Workspace root: `Cargo.toml` (member crate: `src-tauri`, package `rusty`,
   lib `rusty_core`)
 - Binary entry: `src-tauri/src/main.rs`; Tauri builder in `src-tauri/src/lib.rs`
-- Spec-aligned modules: `appinfo.rs`, `updates.rs`, `data_dir.rs`, `logs.rs`
+- Spec-aligned modules: `appinfo.rs`, `updates.rs`, `data_dir.rs`, `logs.rs`,
+  `paths.rs`, `error.rs`, `state.rs`
 - Frontend: `ui/` — plain HTML/CSS/JS, no bundler, no Node.js
 
 Behavioral SSOT for cross-app contracts: `../Docs/razorcore-api-spec.md`
@@ -39,6 +40,7 @@ Behavioral SSOT for cross-app contracts: `../Docs/razorcore-api-spec.md`
 cargo check --workspace
 cargo clippy --workspace
 cargo test --workspace
+zsh scripts/release-preflight.zsh --check-config-only
 zsh scripts/release-build.zsh
 ```
 
@@ -50,8 +52,7 @@ These behaviors are the product. Do not change them unless explicitly requested:
 
 - **Exact duplicates only**: detection is by BLAKE3 content hash. Never add
   fuzzy, same-name, visual-similarity, or metadata-only matching to the
-  duplicate plan. (`perceptual.rs` is review-only and must never feed the plan
-  or move anything.)
+  duplicate plan.
 - **Dry mode is the default** and must never delete, move, rename, or modify
   user files. Dry still saves valid hashes to the cache — keep that.
 - **Real mode never deletes**: it moves confirmed duplicates to
@@ -74,7 +75,8 @@ These behaviors are the product. Do not change them unless explicitly requested:
 - Preserve the UI/backend separation: UI calls `invoke()` into
   `#[tauri::command]` handlers in `commands.rs`; core logic lives in
   `rusty_core` modules (`scanner.rs`, `memory.rs`, `dedupe.rs`,
-  `quarantine.rs`, `appinfo.rs`, `updates.rs`, …).
+  `quarantine.rs`, `appinfo.rs`, `updates.rs`, `paths.rs`, `error.rs`,
+  `state.rs`, …).
 - `_archive_pre_tauri/` is the frozen pre-Tauri implementation — read-only
   reference, never edit or revive it.
 - `target/` and `build-logs/` are generated — never treat them as source.

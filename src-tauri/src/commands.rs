@@ -321,6 +321,58 @@ pub async fn get_last_results(
     }))
 }
 
+#[derive(Deserialize)]
+pub struct SimilarRequest {
+    #[serde(default)]
+    pub max_distance: Option<u32>,
+}
+
+#[tauri::command]
+pub async fn find_similar_videos(
+    state: State<'_, AppState>,
+    request: SimilarRequest,
+) -> Result<crate::similar::SimilarReport, AppError> {
+    let paths: Vec<PathBuf> = {
+        let guard = state.last_results.lock();
+        let Some(last) = guard.as_ref() else {
+            return Err(AppError::BadInput(
+                "run a scan first — Similar uses videos from the last scan".into(),
+            ));
+        };
+        last.counters
+            .video_paths
+            .iter()
+            .map(PathBuf::from)
+            .collect()
+    };
+    if paths.is_empty() {
+        return Ok(crate::similar::SimilarReport {
+            clusters: Vec::new(),
+            videos_considered: 0,
+            videos_fingerprinted: 0,
+            videos_failed: 0,
+            ffmpeg_available: crate::similar::ffmpeg_is_available(),
+            message: "No videos in the last scan.".into(),
+        });
+    }
+    if state.scan_running.swap(true, Ordering::SeqCst) {
+        return Err(AppError::ScanAlreadyRunning);
+    }
+    let _guard = ScanGuard(state.scan_running.clone());
+    state.cancel.store(false, Ordering::SeqCst);
+    let cancel = state.cancel.clone();
+    let logs = state.logs.clone();
+    let max_distance = request
+        .max_distance
+        .unwrap_or(crate::similar::DEFAULT_MAX_DISTANCE);
+
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::similar::find_similar_videos(&paths, max_distance, &logs, &cancel)
+    })
+    .await
+    .map_err(|e| AppError::BadInput(format!("similar task join error: {e}")))?
+}
+
 #[tauri::command]
 pub async fn get_default_plan(state: State<'_, AppState>) -> Result<Vec<PlanEntry>, AppError> {
     Ok(state.current_plan.lock().clone())

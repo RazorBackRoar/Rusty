@@ -45,11 +45,11 @@ changes nothing on disk.
 - In **Real** mode, moves the extra copies of each duplicate group into
   quarantine (keeping one), leaving a manifest so the whole batch can be undone.
 
-It detects duplicates by **content hash only**. It does **not** do similar-image
-detection, fuzzy matching, same-name matching, visual similarity, or
-metadata-only matching when deciding what is a duplicate. (A separate,
-review-only "similar images" tool exists for browsing visually-alike photos — it
-never feeds the duplicate plan and never moves anything.)
+It detects duplicates by **content hash only**. It does **not** do fuzzy matching,
+same-name matching, or metadata-only matching when deciding what is a duplicate.
+A separate review-only **Similar** tab finds rotated/re-encoded likely video
+matches via frame fingerprints (requires `ffmpeg`); it never feeds the quarantine
+plan. A green **Map** tab shows a folder-only directory tree with subtree file counts.
 
 ---
 
@@ -296,7 +296,8 @@ Progress is driven by real scan counts, never faked.
 - **Files that fail to hash are skipped and logged** — never treated as
   duplicates, never touched.
 - **Duplicate detection is exact content/hash only** — no similar-file, fuzzy,
-  same-name, visual-similarity, or metadata-only matching.
+  same-name, visual-similarity, or metadata-only matching on the Duplicates /
+  Real quarantine path. The Similar tab is review-only and separate.
 - **Real acts only on confirmed exact duplicates**, after explicit confirmation.
 - **Real moves duplicates to quarantine instead of permanently deleting them**,
   and writes a manifest so the batch can be undone.
@@ -365,7 +366,8 @@ Rusty/
 │   │   ├── memory.rs         # SQLite hash cache / memory bank
 │   │   ├── dedupe.rs         # group by hash + build plan
 │   │   ├── quarantine.rs     # safe move + manifest + undo
-│   │   ├── perceptual.rs     # review-only similar-image search (never deletes)
+│   │   ├── similar.rs        # review-only similar-video search (never deletes)
+│   │   ├── folder_map.rs     # folder tree + subtree file counts for Map tab
 │   │   ├── paths.rs          # NFC normalize + sanitize + media filtering
 │   │   ├── logs.rs           # ring-buffer log feed
 │   │   ├── data_dir.rs       # resolves app-data layout
@@ -375,7 +377,7 @@ Rusty/
 │   │   └── error.rs          # typed errors that serialize to JS
 │   └── tests/smoke.rs        # integration tests
 ├── ui/
-│   ├── index.html            # one window: Files / Duplicates / Logs tabs
+│   ├── index.html            # Files / Duplicates / Similar / Map / Logs
 │   ├── app.css               # orange + white theme, Dry/Real slider
 │   └── app.js                # invoke() calls, no bundler
 └── .cargo/bin/cargo-tauri    # workspace-local Tauri CLI
@@ -401,7 +403,7 @@ Bundles land at:
 
 ```
 target/release/bundle/macos/Rusty.app
-target/release/bundle/dmg/Rusty_0.2.1_aarch64.dmg
+target/release/bundle/dmg/Rusty_0.2.2_aarch64.dmg
 ```
 
 The Mach-O binary inside the app is named `rusty` (lowercase).

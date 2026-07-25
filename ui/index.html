@@ -173,6 +173,8 @@
         <div class="tabs" role="tablist">
           <button class="tab active" data-tab="files">Files</button>
           <button class="tab" data-tab="duplicates">Duplicates</button>
+          <button class="tab" data-tab="similar">Similar</button>
+          <button class="tab tab-map" data-tab="map">Map</button>
           <button class="tab" data-tab="logs">Logs</button>
         </div>
 
@@ -211,6 +213,31 @@
               <span class="empty-text">Drop or select folders in the sidebar, then press Scan.</span>
             </div>
             <div class="groups" id="duplicates"></div>
+          </div>
+
+          <div class="tab-panel" id="panel-similar">
+            <div class="similar-toolbar">
+              <button class="btn primary small" id="similar-btn" type="button" disabled>Find Similar Videos</button>
+              <label class="similar-thresh">Max distance
+                <input type="number" id="similar-distance" min="0" max="32" step="1" value="10" />
+              </label>
+              <span class="similar-summary" id="similar-summary">Review only — never quarantines.</span>
+            </div>
+            <div class="empty" id="similar-empty">
+              <span class="empty-mark">≈</span>
+              <span class="empty-title">No similar videos yet</span>
+              <span class="empty-text">Exact duplicates stay on Duplicates. This finds rotated/re-encoded likely matches — review only. Requires ffmpeg.</span>
+            </div>
+            <div class="similar-clusters" id="similar-clusters"></div>
+          </div>
+
+          <div class="tab-panel" id="panel-map">
+            <div class="empty" id="map-empty">
+              <span class="empty-mark">⌂</span>
+              <span class="empty-title">No map yet</span>
+              <span class="empty-text">Scan folders to see a directory tree with file counts (folders only — no filenames).</span>
+            </div>
+            <div class="folder-map" id="folder-map"></div>
           </div>
 
           <div class="tab-panel" id="panel-logs">

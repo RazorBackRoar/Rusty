@@ -11,6 +11,7 @@ const state = {
   applyRunning: false,
   quarantineComplete: false,
   lastResponse: null,
+  similarReport: null,
   plan: [],
   logSince: 0,
   followLogs: true,
@@ -179,8 +180,10 @@ async function runScan() {
     });
     scanSucceeded = true;
     state.lastResponse = resp;
+    state.similarReport = null;
     state.plan = await invoke('get_default_plan');
     renderResults();
+    renderSimilar();
     renderPlan();
     renderDonut();
     $('m-folders').textContent = String((resp.counters.folders || {}).total_discovered ?? 0);
@@ -334,6 +337,10 @@ function renderResults() {
     $('file-list').innerHTML = '';
     $('duplicates').innerHTML = '';
     $('dups-empty').style.display = '';
+    state.similarReport = null;
+    renderSimilar();
+    renderMap(null);
+    updateSimilarButton();
     updatePlanBar();
     return;
   }
@@ -353,6 +360,8 @@ function renderResults() {
   renderScanSummary(r);
   renderFiles(r);
   renderDuplicates(r);
+  renderMap(r);
+  updateSimilarButton();
   updatePlanBar();
 }
 
@@ -471,6 +480,127 @@ function renderDuplicates(r) {
   const container = $('duplicates');
   container.innerHTML = '';
   groups.forEach((g, idx) => container.appendChild(renderGroup(g, idx)));
+}
+
+function updateSimilarButton() {
+  const btn = $('similar-btn');
+  if (!btn) return;
+  const videos = state.lastResponse?.counters?.video_paths?.length
+    || state.lastResponse?.counters?.videos
+    || 0;
+  btn.disabled = state.scanRunning || videos < 1;
+}
+
+function renderSimilar() {
+  const report = state.similarReport;
+  const empty = $('similar-empty');
+  const clustersEl = $('similar-clusters');
+  const summary = $('similar-summary');
+  if (!report) {
+    empty.style.display = '';
+    clustersEl.innerHTML = '';
+    summary.textContent = 'Review only — never quarantines.';
+    return;
+  }
+  summary.textContent = report.message || 'Review only — never quarantines.';
+  const clusters = report.clusters || [];
+  empty.style.display = clusters.length ? 'none' : '';
+  if (!clusters.length) {
+    empty.querySelector('.empty-text').textContent = report.message
+      || 'No similar groups found.';
+  }
+  clustersEl.innerHTML = '';
+  for (const c of clusters) {
+    const body = el('div', { class: 'similar-cluster' });
+    body.appendChild(
+      el('div', { class: 'similar-head' },
+        el('span', { class: 'dup-dir-title' },
+          `${c.files.length} likely same · avg distance ${Number(c.avg_distance).toFixed(1)}`),
+        el('span', { class: 'group-wasted' }, 'review only')
+      )
+    );
+    for (const f of c.files) {
+      body.appendChild(
+        el('div', { class: 'similar-row' },
+          el('div', { class: 'file-path' }, f.path))
+      );
+    }
+    clustersEl.appendChild(body);
+  }
+}
+
+async function findSimilarVideos() {
+  if (state.scanRunning) return;
+  const videos = state.lastResponse?.counters?.videos || 0;
+  if (videos < 1) {
+    showError('Scan folders with videos first.');
+    return;
+  }
+  state.scanRunning = true;
+  setCancelButton('show');
+  setStatus('Finding similar videos…', true);
+  $('loading-veil').hidden = false;
+  $('loading-text').textContent = 'Fingerprinting videos…';
+  updateSimilarButton();
+  try {
+    const maxDistance = Number($('similar-distance').value);
+    const report = await invoke('find_similar_videos', {
+      request: {
+        max_distance: Number.isFinite(maxDistance) ? maxDistance : 10,
+      },
+    });
+    state.similarReport = report;
+    renderSimilar();
+    setStatus(report.message || 'Similar search done.', false);
+    // Jump to Similar tab
+    document.querySelector('.tab[data-tab="similar"]')?.click();
+  } catch (err) {
+    if (!isCancelError(err)) showError(err);
+    setStatus(isCancelError(err) ? 'Cancelled.' : 'Similar search failed.', false);
+  } finally {
+    state.scanRunning = false;
+    setCancelButton('hide');
+    $('loading-veil').hidden = true;
+    updateSimilarButton();
+  }
+}
+
+function renderMap(r) {
+  const empty = $('map-empty');
+  const mapEl = $('folder-map');
+  if (!r) {
+    empty.style.display = '';
+    mapEl.innerHTML = '';
+    return;
+  }
+  const trees = r.counters?.folder_map || [];
+  if (!trees.length) {
+    empty.style.display = '';
+    mapEl.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+  mapEl.innerHTML = '';
+  for (const tree of trees) {
+    const root = el('div', { class: 'map-root' });
+    appendMapNode(root, tree, '', true);
+    mapEl.appendChild(root);
+  }
+}
+
+function appendMapNode(container, node, prefix, isLast) {
+  const branch = prefix === '' ? '' : (isLast ? '└── ' : '├── ');
+  const line = el('div', { class: 'map-line' },
+    el('span', { class: 'map-prefix' }, prefix + branch),
+    el('span', { class: 'map-name', title: node.path }, node.name),
+    el('span', { class: 'map-count' }, String(node.file_count ?? 0))
+  );
+  container.appendChild(line);
+  const kids = node.children || [];
+  const childPrefix = prefix === '' ? '' : prefix + (isLast ? '    ' : '│   ');
+  kids.forEach((child, i) => {
+    appendMapNode(container, child, childPrefix, i === kids.length - 1);
+  });
 }
 
 
@@ -1149,7 +1279,13 @@ async function runComparison() {
 
 // ----------------------------- tabs ------------------------------------
 
-const TAB_TITLES = { files: 'Files', duplicates: 'Duplicates', logs: 'Logs' };
+const TAB_TITLES = {
+  files: 'Files',
+  duplicates: 'Duplicates',
+  similar: 'Similar',
+  map: 'Map',
+  logs: 'Logs',
+};
 
 function setupTabs() {
   document.querySelectorAll('.tab').forEach((tab) => {
@@ -1345,6 +1481,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   $('pick-folder').addEventListener('click', pickFolder);
+  $('similar-btn').addEventListener('click', findSimilarVideos);
   $('clear-folders').addEventListener('click', () => {
     state.roots = []; state.peeks = {}; renderRoots();
     if (!$('remembered').hidden) renderRemembered();

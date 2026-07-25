@@ -453,6 +453,36 @@ body.window-inactive .content {
   background: hsla(0 0% 100% / 0.13);
   box-shadow: 0 1px 2px hsla(0 0% 0% / 0.3);
 }
+.tab.tab-map {
+  color: var(--success);
+}
+.tab.tab-map.active {
+  color: hsl(140 35% 12%);
+  background: var(--success);
+  box-shadow: 0 1px 2px hsla(131 40% 30% / 0.35);
+}
+
+/* folder map tree */
+.folder-map {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text);
+  padding: 4px 2px 12px;
+}
+.map-root + .map-root { margin-top: 14px; }
+.map-line {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 2px 0; white-space: nowrap;
+}
+.map-prefix { color: var(--faint); user-select: none; }
+.map-name { color: var(--success); font-weight: 600; }
+.map-count {
+  margin-left: auto; min-width: 2.5em; text-align: right;
+  color: var(--text); font-weight: 700;
+  background: var(--success-muted); border: 1px solid var(--success-border);
+  border-radius: 999px; padding: 0 8px; font-size: 11px;
+}
 
 .panels { position: relative; flex: 1 1 auto; min-height: 0; }
 .tab-panel { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; display: none; padding: 4px 2px 6px; }

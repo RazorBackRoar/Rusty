@@ -56,9 +56,11 @@ These behaviors are the product. Do not change them unless explicitly requested:
   quarantine automation.
 - **Similar is a separate review-only path**: rotation-normalized frame
   perceptual hashes (sample frames, apply display/rotation, compare
-  90°/180°/270° variants) may power a fourth results tab —
-  `Files · Duplicates · Similar · Logs`. Similar never silent-moves in Real
-  mode; keep it review-only or confirm-before-quarantine.
+  90°/180°/270° variants) power the Similar results tab. Requires
+  Homebrew `ffmpeg`/`ffprobe`. Similar never silent-moves in Real mode.
+- **Map is a green results tab**: folder-only directory tree with subtree
+  file counts (no filenames). Built during scan from the same walk.
+  Tab order: `Files · Duplicates · Similar · Map · Logs`.
 - **Dry mode is the default** and must never delete, move, rename, or modify
   user files. Dry still saves valid hashes to the cache — keep that.
 - **Real mode never deletes**: it moves confirmed duplicates to

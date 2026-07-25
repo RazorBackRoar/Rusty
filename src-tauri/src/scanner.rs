@@ -26,6 +26,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::error::{AppError, AppResult};
+use crate::folder_map::{self, DirFileCount, FolderMapNode};
 use crate::logs::LogSink;
 use crate::memory::{CacheHit, MemoryBank};
 use crate::paths;
@@ -87,6 +88,10 @@ pub struct ScanCounters {
     pub per_folder: Vec<PerFolderStats>,
     /// Capped sample of supported files found, for the Files tab.
     pub sample_files: Vec<SampleFile>,
+    /// Folder-only trees (one per selected root) with subtree file counts for Map.
+    pub folder_map: Vec<FolderMapNode>,
+    /// Absolute paths of videos from this scan — used by the Similar tab.
+    pub video_paths: Vec<String>,
 }
 
 /// Counts for one added folder (one scan root). Combined totals live on
@@ -286,6 +291,7 @@ pub fn scan_roots_with_progress(
 
         // Per-folder accumulators — each added folder keeps its own counts.
         let mut dir_aggs: HashMap<String, DirAgg> = HashMap::new();
+        let mut map_counts: HashMap<String, DirFileCount> = HashMap::new();
         let pruned_paths: Arc<Mutex<HashSet<String>>> = Arc::new(Mutex::new(HashSet::new()));
         let mut dir_errors = 0usize;
         let mut r_errors = 0usize;
@@ -335,7 +341,11 @@ pub fn scan_roots_with_progress(
             if dirent.file_type.is_dir() {
                 let norm = paths::normalize_for_storage(&dirent.path());
                 let depth = dirent.depth;
-                dir_aggs.entry(norm).or_default().depth = depth;
+                dir_aggs.entry(norm.clone()).or_default().depth = depth;
+                map_counts.entry(norm.clone()).or_insert(DirFileCount {
+                    depth,
+                    files: 0,
+                }).depth = depth;
                 if depth >= 1 {
                     discovered_dirs += 1;
                     if discovered_dirs % 64 == 0 {
@@ -372,7 +382,7 @@ pub fn scan_roots_with_progress(
                 .map(paths::normalize_for_storage)
                 .unwrap_or_default();
             {
-                let agg = dir_aggs.entry(parent_norm).or_default();
+                let agg = dir_aggs.entry(parent_norm.clone()).or_default();
                 agg.files += 1;
                 match media_kind {
                     MediaKind::Photo => {
@@ -385,6 +395,7 @@ pub fn scan_roots_with_progress(
                     }
                     MediaKind::Other => {}
                 }
+                map_counts.entry(parent_norm).or_default().files += 1;
             }
             match media_kind {
                 MediaKind::Photo => r_photos += 1,
@@ -552,6 +563,10 @@ pub fn scan_roots_with_progress(
         }
 
         memory.update_folder_stats(&root_str, per_root_files as i64, per_root_bytes as i64)?;
+
+        counters
+            .folder_map
+            .push(folder_map::build_folder_map(root, &map_counts));
 
         root_index.insert(root_str.clone(), per_folder.len());
         per_folder.push(PerFolderStats {
@@ -909,6 +924,11 @@ pub fn scan_roots_with_progress(
     counters.moved_reused = moved_reused;
     counters.new_hashes_saved = counters.hashes_computed;
     counters.per_folder = per_folder;
+    counters.video_paths = out
+        .iter()
+        .filter(|f| f.media_kind == MediaKind::Video)
+        .map(|f| f.path.clone())
+        .collect();
 
     progress(ScanProgress {
         phase: "done".into(),

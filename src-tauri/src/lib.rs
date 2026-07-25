@@ -3,11 +3,13 @@ pub mod commands;
 pub mod data_dir;
 pub mod dedupe;
 pub mod error;
+pub mod folder_map;
 pub mod logs;
 pub mod memory;
 pub mod paths;
 pub mod quarantine;
 pub mod scanner;
+pub mod similar;
 pub mod state;
 pub mod updates;
 
@@ -45,6 +47,7 @@ pub fn run() {
             commands::cancel_scan,
             commands::get_app_info,
             commands::check_for_updates,
+            commands::find_similar_videos,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -182,7 +182,7 @@ mod tests {
     #[test]
     fn compare_versions_orders_semver() {
         assert_eq!(compare_versions("0.2.0", "0.2.1"), -1);
-        assert_eq!(compare_versions("v0.3.0", "0.2.9"), 1);
+        assert_eq!(compare_versions("v1.1.0", "1.0.0"), 1);
         assert_eq!(compare_versions("1.0.0", "v1.0.0"), 0);
     }
 }

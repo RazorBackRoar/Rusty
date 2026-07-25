@@ -1,7 +1,7 @@
 # Rusty
 
 [![Download](https://img.shields.io/github/v/release/RazorBackRoar/Rusty?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg)
-[![Version](https://img.shields.io/badge/version-0.2.9-c4711a?style=for-the-badge)](https://github.com/RazorBackRoar/Rusty/releases/tag/v0.2.9)
+[![Version](https://img.shields.io/badge/version-1.0.0-c4711a?style=for-the-badge)](https://github.com/RazorBackRoar/Rusty/releases/tag/v1.0.0)
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Rusty/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-2021-e8710a?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
@@ -13,7 +13,7 @@
 Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
 
 <p align="center">
-  <a href="https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg"><strong>↓ Download Rusty.dmg (v0.2.9)</strong></a>
+  <a href="https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg"><strong>↓ Download Rusty.dmg (v1.0.0)</strong></a>
 </p>
 
 ![Rusty](docs/screenshots/app.png)
@@ -407,7 +407,7 @@ dist/Rusty.dmg
 ```
 
 (Intermediate `.app` / versioned DMG under `target/release/bundle/` are cleaned
-during packaging — the staged artifact is always `dist/Rusty.dmg` for v0.2.9.)
+during packaging — the staged artifact is always `dist/Rusty.dmg` for v1.0.0.)
 
 The Mach-O binary inside the app is named `rusty` (lowercase).
 

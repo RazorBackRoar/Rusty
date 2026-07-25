@@ -1284,6 +1284,7 @@ function activateTab(name, { animate = true } = {}) {
   const content = document.querySelector('.content');
   const modePill = $('mode-seg');
   const updateDOM = () => {
+    document.body.dataset.accent = name;
     if (tabs) tabs.dataset.tab = name;
     if (content) content.dataset.accent = name;
     if (modePill) modePill.dataset.accent = name;

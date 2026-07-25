@@ -153,15 +153,16 @@ body {
   cursor: default;
 }
 
-/* Thin gold window frame — elegant 1px accent line around the entire window */
+/* Thin accent window frame — follows the active results tab color */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 1000;
   pointer-events: none;
-  border: 1px solid var(--gold-line);
+  border: 1px solid var(--ui-accent-soft);
   border-radius: 12px;
+  transition: border-color 0.28s ease;
 }
 
 /* Content the user should be able to copy */
@@ -304,7 +305,7 @@ h3 { font-size: 18px; }
   background: var(--surface);
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--gold-line);
+  border: 1px solid var(--ui-accent-soft);
   border-radius: var(--r);
   box-shadow: var(--shadow-card);
   overflow-x: hidden;
@@ -313,7 +314,7 @@ h3 { font-size: 18px; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.25s ease;
+  transition: border-color 0.28s ease;
 }
 .panel { padding: 20px 24px; min-width: 0; transition: padding 0.2s ease-in-out; }
 .panel + .panel { border-top: 1px solid var(--border-light); }
@@ -474,7 +475,7 @@ h3 { font-size: 18px; }
   background: var(--surface);
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--tab-files-soft);
+  border: 1px solid var(--ui-accent-soft);
   border-radius: var(--r);
   box-shadow: var(--shadow-card);
   padding: 18px 20px 16px;
@@ -485,13 +486,9 @@ h3 { font-size: 18px; }
   overflow: hidden;
 }
 
-.content[data-accent="files"]      { border-color: var(--tab-files-soft); }
-.content[data-accent="duplicates"] { border-color: var(--tab-dups-soft); }
-.content[data-accent="similar"]    { border-color: var(--tab-similar-soft); }
-.content[data-accent="map"]        { border-color: var(--tab-map-soft); }
-.content[data-accent="logs"]       { border-color: var(--tab-logs-soft); }
-
-body.window-inactive .content {
+body.window-inactive .content,
+body.window-inactive .sidebar,
+body.window-inactive::before {
   border-color: var(--border-light);
 }
 

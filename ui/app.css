@@ -27,6 +27,18 @@
   --success-muted:  hsla(131 40% 48% / 0.14);
   --success-border: hsla(131 40% 48% / 0.32);
 
+  /* Results-tab accent colors */
+  --tab-files:      #e8913a;                     /* orange */
+  --tab-files-soft: hsla(32 80% 56% / 0.55);
+  --tab-dups:       #4a9eff;                     /* blue */
+  --tab-dups-soft:  hsla(210 100% 64% / 0.55);
+  --tab-similar:    #e03131;                     /* red */
+  --tab-similar-soft: hsla(0 74% 54% / 0.55);
+  --tab-map:        #34c759;                     /* green */
+  --tab-map-soft:   hsla(131 55% 48% / 0.55);
+  --tab-logs:       #9aa3ad;                     /* grey */
+  --tab-logs-soft:  hsla(210 10% 64% / 0.45);
+
   --brand-gradient: linear-gradient(135deg, #d4af37 0%, #c49a2a 45%, #a3b0be 100%);
 
   /* Window + surfaces */
@@ -410,16 +422,22 @@ h3 { font-size: 18px; }
   background: var(--surface);
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--gold-line);
+  border: 1px solid var(--tab-files-soft);
   border-radius: var(--r);
   box-shadow: var(--shadow-card);
   padding: 18px 20px 16px;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.25s ease;
+  transition: border-color 0.28s ease;
   min-height: 0;
   overflow: hidden;
 }
+
+.content[data-accent="files"]      { border-color: var(--tab-files-soft); }
+.content[data-accent="duplicates"] { border-color: var(--tab-dups-soft); }
+.content[data-accent="similar"]    { border-color: var(--tab-similar-soft); }
+.content[data-accent="map"]        { border-color: var(--tab-map-soft); }
+.content[data-accent="logs"]       { border-color: var(--tab-logs-soft); }
 
 body.window-inactive .content {
   border-color: var(--border-light);
@@ -429,37 +447,95 @@ body.window-inactive .content {
 .content-title { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
 .results-stats { font-size: 12.5px; color: var(--muted); font-weight: 400; }
 
-/* Tabs — macOS segmented control */
+/* Tabs — 5-segment glass slider (drag or click) */
 .tabs {
-  display: inline-flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-self: flex-start;
-  gap: 2px;
+  gap: 0;
   background: hsla(0 0% 0% / 0.28);
   border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 2px;
   margin-bottom: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.tabs-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / 5);
+  border-radius: 6px;
+  background: linear-gradient(180deg, hsla(0 0% 100% / 0.22), hsla(0 0% 100% / 0.08));
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 hsla(0 0% 100% / 0.28),
+    0 1px 3px hsla(0 0% 0% / 0.35);
+  transition:
+    transform 0.28s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.28s ease,
+    box-shadow 0.28s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.tabs[data-tab="files"] .tabs-thumb {
+  transform: translateX(0%);
+  background: linear-gradient(180deg, hsla(32 90% 62% / 0.92), hsla(32 80% 48% / 0.88));
+  box-shadow: inset 0 1px 0 hsla(0 0% 100% / 0.28), 0 1px 4px hsla(32 80% 40% / 0.35);
+}
+.tabs[data-tab="duplicates"] .tabs-thumb {
+  transform: translateX(100%);
+  background: linear-gradient(180deg, hsla(210 100% 70% / 0.92), hsla(210 90% 55% / 0.88));
+  box-shadow: inset 0 1px 0 hsla(0 0% 100% / 0.28), 0 1px 4px hsla(210 90% 45% / 0.35);
+}
+.tabs[data-tab="similar"] .tabs-thumb {
+  transform: translateX(200%);
+  background: linear-gradient(180deg, hsla(0 80% 62% / 0.92), hsla(0 74% 48% / 0.88));
+  box-shadow: inset 0 1px 0 hsla(0 0% 100% / 0.28), 0 1px 4px hsla(0 70% 40% / 0.35);
+}
+.tabs[data-tab="map"] .tabs-thumb {
+  transform: translateX(300%);
+  background: linear-gradient(180deg, hsla(131 55% 58% / 0.92), hsla(131 50% 42% / 0.88));
+  box-shadow: inset 0 1px 0 hsla(0 0% 100% / 0.28), 0 1px 4px hsla(131 45% 35% / 0.35);
+}
+.tabs[data-tab="logs"] .tabs-thumb {
+  transform: translateX(400%);
+  background: linear-gradient(180deg, hsla(210 10% 68% / 0.75), hsla(210 8% 48% / 0.78));
+  box-shadow: inset 0 1px 0 hsla(0 0% 100% / 0.2), 0 1px 3px hsla(0 0% 0% / 0.3);
+}
+.tabs.dragging .tabs-thumb {
+  transition: none;
 }
 .tab {
-  border: 0; background: none; padding: 4px 18px; font-size: 12.5px; font-weight: 500;
-  cursor: pointer; color: var(--muted);
-  border-radius: 6px;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-.tab:hover { color: var(--text); }
-.tab.active {
-  color: var(--text);
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: none;
+  padding: 5px 10px;
+  font-size: 12.5px;
   font-weight: 600;
-  background: hsla(0 0% 100% / 0.13);
-  box-shadow: 0 1px 2px hsla(0 0% 0% / 0.3);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.22s ease;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 0;
 }
-.tab.tab-map {
-  color: var(--success);
-}
-.tab.tab-map.active {
-  color: hsl(140 35% 12%);
-  background: var(--success);
-  box-shadow: 0 1px 2px hsla(131 40% 30% / 0.35);
+.tab[data-tab="files"]      { color: var(--tab-files); }
+.tab[data-tab="duplicates"] { color: var(--tab-dups); }
+.tab[data-tab="similar"]    { color: var(--tab-similar); }
+.tab[data-tab="map"]        { color: var(--tab-map); }
+.tab[data-tab="logs"]       { color: var(--tab-logs); }
+.tab:hover { filter: brightness(1.12); }
+.tab.active {
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 1px hsla(0 0% 0% / 0.25);
 }
 
 /* folder map tree */

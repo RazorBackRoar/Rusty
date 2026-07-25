@@ -553,7 +553,7 @@ async function findSimilarVideos() {
     renderSimilar();
     setStatus(report.message || 'Similar search done.', false);
     // Jump to Similar tab
-    document.querySelector('.tab[data-tab="similar"]')?.click();
+    activateTab('similar');
   } catch (err) {
     if (!isCancelError(err)) showError(err);
     setStatus(isCancelError(err) ? 'Cancelled.' : 'Similar search failed.', false);
@@ -1246,12 +1246,7 @@ async function runComparison() {
       groups.forEach((g, idx) => results.appendChild(renderGroup(g, idx)));
     }
     // Switch to Duplicates tab to show results
-    document.querySelectorAll('.tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.tab === 'duplicates');
-    });
-    document.querySelectorAll('.tab-panel').forEach(p => {
-      p.classList.toggle('active', p.id === 'panel-duplicates');
-    });
+    activateTab('duplicates');
   } catch (err) {
     if (!isCancelError(err)) {
       showError(err);
@@ -1262,12 +1257,7 @@ async function runComparison() {
         )
       );
       // Switch to Duplicates tab to show the error
-      document.querySelectorAll('.tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === 'duplicates');
-      });
-      document.querySelectorAll('.tab-panel').forEach(p => {
-        p.classList.toggle('active', p.id === 'panel-duplicates');
-      });
+      activateTab('duplicates');
     }
   } finally {
     state.compareRunning = false;
@@ -1279,6 +1269,7 @@ async function runComparison() {
 
 // ----------------------------- tabs ------------------------------------
 
+const TAB_ORDER = ['files', 'duplicates', 'similar', 'map', 'logs'];
 const TAB_TITLES = {
   files: 'Files',
   duplicates: 'Duplicates',
@@ -1287,27 +1278,97 @@ const TAB_TITLES = {
   logs: 'Logs',
 };
 
-function setupTabs() {
-  document.querySelectorAll('.tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const updateDOM = () => {
-        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-        tab.classList.add('active');
-        $(`panel-${tab.dataset.tab}`).classList.add('active');
-        // The Export button lives inside the Logs panel, so it shows only when
-        // Logs is the active tab and is hidden otherwise — no extra JS needed.
-        const title = document.querySelector('.content-title');
-        if (title) title.textContent = TAB_TITLES[tab.dataset.tab] || 'Results';
-      };
+function activateTab(name, { animate = true } = {}) {
+  if (!TAB_ORDER.includes(name)) return;
+  const tabs = $('results-tabs');
+  const content = document.querySelector('.content');
+  const updateDOM = () => {
+    if (tabs) tabs.dataset.tab = name;
+    if (content) content.dataset.accent = name;
+    document.querySelectorAll('.tab').forEach((t) => {
+      t.classList.toggle('active', t.dataset.tab === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach((p) => {
+      p.classList.toggle('active', p.id === `panel-${name}`);
+    });
+    const title = document.querySelector('.content-title');
+    if (title) title.textContent = TAB_TITLES[name] || 'Results';
+  };
 
-      if (!document.startViewTransition) {
-        updateDOM();
-      } else {
-        document.startViewTransition(updateDOM);
+  if (!animate || !document.startViewTransition) {
+    updateDOM();
+  } else {
+    document.startViewTransition(updateDOM);
+  }
+}
+
+function tabIndexFromPointer(tabsEl, clientX) {
+  const rect = tabsEl.getBoundingClientRect();
+  const x = Math.min(Math.max(clientX - rect.left, 0), rect.width - 0.001);
+  return Math.min(TAB_ORDER.length - 1, Math.floor((x / rect.width) * TAB_ORDER.length));
+}
+
+function setupTabs() {
+  const tabs = $('results-tabs');
+  if (!tabs) return;
+
+  // Ensure initial accent matches the default Files tab.
+  activateTab(tabs.dataset.tab || 'files', { animate: false });
+
+  tabs.querySelectorAll('.tab').forEach((tab) => {
+    tab.addEventListener('click', (e) => {
+      // Drag-release already activates; ignore the click that follows a drag.
+      if (tabs.dataset.dragged === '1') {
+        e.preventDefault();
+        return;
       }
+      activateTab(tab.dataset.tab);
     });
   });
+
+  let startX = null;
+  let dragging = false;
+  let lastIdx = TAB_ORDER.indexOf(tabs.dataset.tab || 'files');
+
+  tabs.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    startX = e.clientX;
+    dragging = false;
+    tabs.dataset.dragged = '0';
+    lastIdx = TAB_ORDER.indexOf(tabs.dataset.tab || 'files');
+    tabs.setPointerCapture?.(e.pointerId);
+  });
+
+  tabs.addEventListener('pointermove', (e) => {
+    if (startX == null) return;
+    const dx = Math.abs(e.clientX - startX);
+    if (!dragging && dx < 8) return;
+    dragging = true;
+    tabs.dataset.dragged = '1';
+    tabs.classList.add('dragging');
+    const idx = tabIndexFromPointer(tabs, e.clientX);
+    if (idx !== lastIdx) {
+      lastIdx = idx;
+      // Live slide without view-transition flicker while dragging.
+      activateTab(TAB_ORDER[idx], { animate: false });
+    }
+  });
+
+  const endDrag = (e) => {
+    if (startX == null) return;
+    if (dragging) {
+      const idx = tabIndexFromPointer(tabs, e.clientX);
+      activateTab(TAB_ORDER[idx], { animate: false });
+    }
+    startX = null;
+    dragging = false;
+    tabs.classList.remove('dragging');
+    // Clear dragged flag after the click event that follows pointerup.
+    setTimeout(() => { tabs.dataset.dragged = '0'; }, 0);
+  };
+
+  tabs.addEventListener('pointerup', endDrag);
+  tabs.addEventListener('pointercancel', endDrag);
 }
 
 // ----------------------------- errors ----------------------------------

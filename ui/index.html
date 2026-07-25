@@ -164,18 +164,19 @@
       </aside>
 
       <!-- Content -->
-      <section class="content">
+      <section class="content" data-accent="files">
         <div class="content-head">
           <h2 class="content-title">Files</h2>
           <span class="results-stats" id="results-stats">No scan yet.</span>
         </div>
 
-        <div class="tabs" role="tablist">
-          <button class="tab active" data-tab="files">Files</button>
-          <button class="tab" data-tab="duplicates">Duplicates</button>
-          <button class="tab" data-tab="similar">Similar</button>
-          <button class="tab tab-map" data-tab="map">Map</button>
-          <button class="tab" data-tab="logs">Logs</button>
+        <div class="tabs" id="results-tabs" role="tablist" data-tab="files" aria-label="Results tabs">
+          <div class="tabs-thumb" aria-hidden="true"></div>
+          <button class="tab active" data-tab="files" type="button">Files</button>
+          <button class="tab" data-tab="duplicates" type="button">Duplicates</button>
+          <button class="tab" data-tab="similar" type="button">Similar</button>
+          <button class="tab" data-tab="map" type="button">Map</button>
+          <button class="tab" data-tab="logs" type="button">Logs</button>
         </div>
 
         <!-- Shown only in Real mode when the plan has items to quarantine -->

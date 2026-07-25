@@ -93,7 +93,7 @@ cat >"$portable_root/src-tauri/tauri.conf.json" <<'EOF'
     "macOS": {
       "signingIdentity": "-",
       "dmg": {
-        "windowSize": { "width": 500, "height": 360 },
+        "windowSize": { "width": 500, "height": 420 },
         "appPosition": { "x": 130, "y": 160 },
         "applicationFolderPosition": { "x": 370, "y": 160 }
       }

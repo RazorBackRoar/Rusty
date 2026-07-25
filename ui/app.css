@@ -147,7 +147,7 @@ body {
   user-select: none;
   -webkit-user-select: none;
   cursor: default;
-  padding: 2px;
+  padding: 3px;
   transition: background 0.16s ease;
 }
 

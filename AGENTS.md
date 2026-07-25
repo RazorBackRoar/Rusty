@@ -91,3 +91,11 @@ These behaviors are the product. Do not change them unless explicitly requested:
 - Do not commit, push, branch-switch, or create worktrees unless explicitly
   requested.
 - Do not modify unrelated apps in the workspace.
+
+## Learned User Preferences
+
+- Results tabs: Files orange, Duplicates blue, Similar red, Map green, Logs
+  grey; click-and-drag glass slider (also clickable). Active-tab accents
+  (Rusty brand, Scan/Compare, Sources, Add Folder, Dry/Real, window rim)
+  follow the selected tab and start as Files orange.
+- Tab switches must feel instant — no bounce, delay, or stutter.

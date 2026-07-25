@@ -1278,31 +1278,23 @@ const TAB_TITLES = {
   logs: 'Logs',
 };
 
-function activateTab(name, { animate = true } = {}) {
+function activateTab(name) {
   if (!TAB_ORDER.includes(name)) return;
   const tabs = $('results-tabs');
   const content = document.querySelector('.content');
   const modePill = $('mode-seg');
-  const updateDOM = () => {
-    document.body.dataset.accent = name;
-    if (tabs) tabs.dataset.tab = name;
-    if (content) content.dataset.accent = name;
-    if (modePill) modePill.dataset.accent = name;
-    document.querySelectorAll('.tab').forEach((t) => {
-      t.classList.toggle('active', t.dataset.tab === name);
-    });
-    document.querySelectorAll('.tab-panel').forEach((p) => {
-      p.classList.toggle('active', p.id === `panel-${name}`);
-    });
-    const title = document.querySelector('.content-title');
-    if (title) title.textContent = TAB_TITLES[name] || 'Results';
-  };
-
-  if (!animate || !document.startViewTransition) {
-    updateDOM();
-  } else {
-    document.startViewTransition(updateDOM);
-  }
+  document.body.dataset.accent = name;
+  if (tabs) tabs.dataset.tab = name;
+  if (content) content.dataset.accent = name;
+  if (modePill) modePill.dataset.accent = name;
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach((p) => {
+    p.classList.toggle('active', p.id === `panel-${name}`);
+  });
+  const title = document.querySelector('.content-title');
+  if (title) title.textContent = TAB_TITLES[name] || 'Results';
 }
 
 function tabIndexFromPointer(tabsEl, clientX) {
@@ -1316,7 +1308,7 @@ function setupTabs() {
   if (!tabs) return;
 
   // Ensure initial accent matches the default Files tab.
-  activateTab(tabs.dataset.tab || 'files', { animate: false });
+  activateTab(tabs.dataset.tab || 'files');
 
   // Clicks on labels always switch — drag is handled separately.
   tabs.querySelectorAll('.tab').forEach((tab) => {
@@ -1356,7 +1348,7 @@ function setupTabs() {
     const idx = tabIndexFromPointer(tabs, e.clientX);
     if (idx !== lastIdx) {
       lastIdx = idx;
-      activateTab(TAB_ORDER[idx], { animate: false });
+      activateTab(TAB_ORDER[idx]);
     }
   });
 
@@ -1365,7 +1357,7 @@ function setupTabs() {
     if (activePointerId != null && e.pointerId !== activePointerId) return;
     if (dragging) {
       const idx = tabIndexFromPointer(tabs, e.clientX);
-      activateTab(TAB_ORDER[idx], { animate: false });
+      activateTab(TAB_ORDER[idx]);
       try { tabs.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     }
     startX = null;

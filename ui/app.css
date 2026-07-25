@@ -162,7 +162,7 @@ body::before {
   pointer-events: none;
   border: 1px solid var(--ui-accent-soft);
   border-radius: 12px;
-  transition: border-color 0.28s ease;
+  transition: border-color 0.16s ease;
 }
 
 /* Content the user should be able to copy */
@@ -314,7 +314,7 @@ h3 { font-size: 18px; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.28s ease;
+  transition: border-color 0.16s ease;
 }
 .panel { padding: 20px 24px; min-width: 0; transition: padding 0.2s ease-in-out; }
 .panel + .panel { border-top: 1px solid var(--border-light); }
@@ -526,9 +526,9 @@ body.window-inactive::before {
     inset 0 1px 0 hsla(0 0% 100% / 0.28),
     0 1px 3px hsla(0 0% 0% / 0.35);
   transition:
-    transform 0.28s cubic-bezier(0.32, 0.72, 0, 1),
-    background 0.28s ease,
-    box-shadow 0.28s ease;
+    transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.16s ease,
+    box-shadow 0.16s ease;
   pointer-events: none;
   z-index: 0;
 }
@@ -611,12 +611,7 @@ body.window-inactive::before {
 
 .panels { position: relative; flex: 1 1 auto; min-height: 0; }
 .tab-panel { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; display: none; padding: 4px 2px 6px; }
-.tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.tab-panel.active { display: block; }
 
 /* sticky sub-toolbars inside panels */
 .plan-toolbar, .similar-toolbar, .log-toolbar {
@@ -725,21 +720,24 @@ body.window-inactive::before {
 .btn.success { background: var(--success); color: hsl(140 35% 12%); border-color: transparent; font-weight: 600; }
 .btn.success:hover { background: hsl(131 40% 54%); }
 
-/* Scan + Compare Folders follow the active tab accent */
+/* Scan, Compare Folders, and Add Folder follow the active tab accent */
 #scan-btn.btn.success,
-#compare-btn.btn.primary {
+#compare-btn.btn.primary,
+#pick-folder.btn.primary {
   background: var(--ui-accent);
   color: #fff;
   border-color: transparent;
-  transition: background 0.28s ease, color 0.28s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 #scan-btn.btn.success:hover,
-#compare-btn.btn.primary:hover {
+#compare-btn.btn.primary:hover,
+#pick-folder.btn.primary:hover {
   filter: brightness(1.08);
   background: var(--ui-accent);
 }
 #scan-btn.btn.success:active,
-#compare-btn.btn.primary:active {
+#compare-btn.btn.primary:active,
+#pick-folder.btn.primary:active {
   filter: brightness(0.94);
   background: var(--ui-accent);
 }
@@ -1415,22 +1413,8 @@ body.drag-over::after {
   opacity: 0.9;
 }
 
+#panel-sources .panel-head h2,
 #panel-compare .panel-head h2 {
   color: var(--ui-accent);
-  transition: color 0.28s ease;
-}
-
-/* ───────────────────────────── view transitions ──────────────────────────── */
-::view-transition-old(root) {
-  animation: fade-out 0.15s ease-out both;
-}
-::view-transition-new(root) {
-  animation: slide-in 0.2s cubic-bezier(0.19, 1, 0.22, 1) both;
-}
-@keyframes fade-out {
-  to { opacity: 0; }
-}
-@keyframes slide-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  transition: color 0.18s ease;
 }

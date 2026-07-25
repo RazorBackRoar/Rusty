@@ -1,6 +1,7 @@
 # Rusty
 
-[![Download](https://img.shields.io/github/v/release/RazorBackRoar/Rusty?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/Rusty/releases/latest)
+[![Download](https://img.shields.io/github/v/release/RazorBackRoar/Rusty?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg)
+[![Version](https://img.shields.io/badge/version-0.2.9-c4711a?style=for-the-badge)](https://github.com/RazorBackRoar/Rusty/releases/tag/v0.2.9)
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Rusty/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Rusty/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-2021-e8710a?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
@@ -12,9 +13,7 @@
 Exact BLAKE3 hash matching only — never fuzzy. Default **Dry** mode is read-only; **Real** mode quarantines confirmed duplicates after explicit confirmation.
 
 <p align="center">
-  <a href="https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg"><strong>↓ Download Rusty.dmg</strong></a>
-  ·
-  <a href="https://github.com/RazorBackRoar/Rusty/releases">All releases</a>
+  <a href="https://github.com/RazorBackRoar/Rusty/releases/latest/download/Rusty.dmg"><strong>↓ Download Rusty.dmg (v0.2.9)</strong></a>
 </p>
 
 ![Rusty](docs/screenshots/app.png)
@@ -49,14 +48,16 @@ It detects duplicates by **content hash only**. It does **not** do fuzzy matchin
 same-name matching, or metadata-only matching when deciding what is a duplicate.
 A separate review-only **Similar** tab finds rotated/re-encoded likely video
 matches via frame fingerprints (requires `ffmpeg`); it never feeds the quarantine
-plan. A green **Map** tab shows a folder-only directory tree with subtree file counts.
+plan. A **Map** tab shows a folder-only directory tree with subtree file counts.
+Results tabs: **Files · Duplicates · Similar · Map · Logs**.
 
 ---
 
 ## The two modes
 
-Rusty has a two-position mode slider in the toolbar: **Dry · Real**. The orange
-thumb slides to the half you pick. **Dry is selected by default.**
+Rusty has a two-position mode slider in the toolbar: **Dry · Real**. The thumb
+follows the active results-tab accent (Real = full color, Dry = darkened).
+**Dry is selected by default.**
 
 | Mode | Touches your files? | What it does |
 |------|:-------------------:|--------------|
@@ -402,9 +403,11 @@ zsh scripts/release-build.zsh
 Bundles land at:
 
 ```
-target/release/bundle/macos/Rusty.app
-target/release/bundle/dmg/Rusty_0.2.2_aarch64.dmg
+dist/Rusty.dmg
 ```
+
+(Intermediate `.app` / versioned DMG under `target/release/bundle/` are cleaned
+during packaging — the staged artifact is always `dist/Rusty.dmg` for v0.2.9.)
 
 The Mach-O binary inside the app is named `rusty` (lowercase).
 

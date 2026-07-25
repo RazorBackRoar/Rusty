@@ -68,5 +68,9 @@ print ""
 "$repo_root/scripts/release-preflight.zsh" --verify-log "$log_path" --verify-bundles
 
 print ""
+# Keep the checkout lean — drop target/ if it exceeds the default 8 GiB budget.
+"$repo_root/scripts/prune-target.zsh"
+
+print ""
 print "Finished: $(date)"
 print "Release log: $log_path"

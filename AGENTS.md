@@ -42,6 +42,7 @@ cargo clippy --workspace
 cargo test --workspace
 zsh scripts/release-preflight.zsh --check-config-only
 zsh scripts/release-build.zsh
+zsh scripts/prune-target.zsh            # drop target/ if over 8 GiB
 ```
 
 Run `cargo test --workspace` before claiming success on any change.

@@ -49,6 +49,15 @@ are removed during packaging; the workspace app folder contains only one DMG.
 The Mach-O binary inside the shipped app is named `rusty` (lowercase). Each release run
 writes a timestamped log under `build-logs/`.
 
+After a successful release build, `scripts/prune-target.zsh` removes `target/` if it
+exceeds **8 GiB** (override with `--max-gb N`, force with `--force`). Run it anytime:
+
+```zsh
+zsh scripts/prune-target.zsh            # clean if over 8 GiB
+zsh scripts/prune-target.zsh --force    # always clean
+zsh scripts/prune-target.zsh --dry-run  # report only
+```
+
 Preflight-only check:
 
 ```zsh

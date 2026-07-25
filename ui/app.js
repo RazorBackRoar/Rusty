@@ -537,7 +537,7 @@ async function findSimilarVideos() {
     return;
   }
   state.scanRunning = true;
-  setCancelButton('show');
+  setCancelButton('scan');
   setStatus('Finding similar videos…', true);
   $('loading-veil').hidden = false;
   $('loading-text').textContent = 'Fingerprinting videos…';
@@ -559,7 +559,7 @@ async function findSimilarVideos() {
     setStatus(isCancelError(err) ? 'Cancelled.' : 'Similar search failed.', false);
   } finally {
     state.scanRunning = false;
-    setCancelButton('hide');
+    setCancelButton('hidden');
     $('loading-veil').hidden = true;
     updateSimilarButton();
   }

@@ -1282,9 +1282,11 @@ function activateTab(name, { animate = true } = {}) {
   if (!TAB_ORDER.includes(name)) return;
   const tabs = $('results-tabs');
   const content = document.querySelector('.content');
+  const modePill = $('mode-seg');
   const updateDOM = () => {
     if (tabs) tabs.dataset.tab = name;
     if (content) content.dataset.accent = name;
+    if (modePill) modePill.dataset.accent = name;
     document.querySelectorAll('.tab').forEach((t) => {
       t.classList.toggle('active', t.dataset.tab === name);
     });
@@ -1315,13 +1317,11 @@ function setupTabs() {
   // Ensure initial accent matches the default Files tab.
   activateTab(tabs.dataset.tab || 'files', { animate: false });
 
+  // Clicks on labels always switch — drag is handled separately.
   tabs.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', (e) => {
-      // Drag-release already activates; ignore the click that follows a drag.
-      if (tabs.dataset.dragged === '1') {
-        e.preventDefault();
-        return;
-      }
+      e.stopPropagation();
+      if (tabs.dataset.suppressClick === '1') return;
       activateTab(tab.dataset.tab);
     });
   });
@@ -1329,42 +1329,50 @@ function setupTabs() {
   let startX = null;
   let dragging = false;
   let lastIdx = TAB_ORDER.indexOf(tabs.dataset.tab || 'files');
+  let activePointerId = null;
 
   tabs.addEventListener('pointerdown', (e) => {
     if (e.button != null && e.button !== 0) return;
+    // Don't steal clicks from the tab buttons — only start a drag gesture
+    // tracking; activation on short press still comes from the button click.
     startX = e.clientX;
     dragging = false;
-    tabs.dataset.dragged = '0';
+    tabs.dataset.suppressClick = '0';
     lastIdx = TAB_ORDER.indexOf(tabs.dataset.tab || 'files');
-    tabs.setPointerCapture?.(e.pointerId);
+    activePointerId = e.pointerId;
   });
 
   tabs.addEventListener('pointermove', (e) => {
-    if (startX == null) return;
+    if (startX == null || e.pointerId !== activePointerId) return;
     const dx = Math.abs(e.clientX - startX);
-    if (!dragging && dx < 8) return;
-    dragging = true;
-    tabs.dataset.dragged = '1';
-    tabs.classList.add('dragging');
+    if (!dragging && dx < 10) return;
+    if (!dragging) {
+      dragging = true;
+      tabs.dataset.suppressClick = '1';
+      tabs.classList.add('dragging');
+      try { tabs.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    }
     const idx = tabIndexFromPointer(tabs, e.clientX);
     if (idx !== lastIdx) {
       lastIdx = idx;
-      // Live slide without view-transition flicker while dragging.
       activateTab(TAB_ORDER[idx], { animate: false });
     }
   });
 
   const endDrag = (e) => {
     if (startX == null) return;
+    if (activePointerId != null && e.pointerId !== activePointerId) return;
     if (dragging) {
       const idx = tabIndexFromPointer(tabs, e.clientX);
       activateTab(TAB_ORDER[idx], { animate: false });
+      try { tabs.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     }
     startX = null;
     dragging = false;
+    activePointerId = null;
     tabs.classList.remove('dragging');
-    // Clear dragged flag after the click event that follows pointerup.
-    setTimeout(() => { tabs.dataset.dragged = '0'; }, 0);
+    // Keep suppressClick through the synthetic click that follows a drag.
+    setTimeout(() => { tabs.dataset.suppressClick = '0'; }, 0);
   };
 
   tabs.addEventListener('pointerup', endDrag);

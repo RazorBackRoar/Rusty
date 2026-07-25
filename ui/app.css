@@ -167,8 +167,8 @@ h3 { font-size: 18px; }
 .toolbar-status .status { max-width: min(360px, 100%); }
 .toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-/* Dry · Real segmented slider. The thumb is orange while Dry (safe) is
-   selected and turns red when Real (destructive) is armed. */
+/* Dry · Real segmented slider. Thumb follows the active results-tab color:
+   Real = full tab color, Dry = darkened shade of the same color. */
 .mode-pill {
   position: relative;
   display: grid;
@@ -187,17 +187,29 @@ h3 { font-size: 18px; }
   top: 2px; bottom: 2px;
   left: 2px;
   width: calc(50% - 2px);
-  background: var(--blue);
   border-radius: 5px;
   box-shadow: 0 1px 3px hsla(0 0% 0% / 0.35);
   transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1), background 0.22s ease;
   pointer-events: none;
+  /* Default = Files orange (darkened for Dry) */
+  background: #9a5a18;
 }
 
 .mode-pill.real .mode-pill-thumb {
   transform: translateX(100%);
-  background: var(--accent);
+  background: var(--tab-files);
 }
+
+.mode-pill[data-accent="files"].dry .mode-pill-thumb      { background: #9a5a18; }
+.mode-pill[data-accent="files"].real .mode-pill-thumb     { background: var(--tab-files); }
+.mode-pill[data-accent="duplicates"].dry .mode-pill-thumb { background: #1f5f9e; }
+.mode-pill[data-accent="duplicates"].real .mode-pill-thumb{ background: var(--tab-dups); }
+.mode-pill[data-accent="similar"].dry .mode-pill-thumb    { background: #8a1c1c; }
+.mode-pill[data-accent="similar"].real .mode-pill-thumb   { background: var(--tab-similar); }
+.mode-pill[data-accent="map"].dry .mode-pill-thumb        { background: #1d6b32; }
+.mode-pill[data-accent="map"].real .mode-pill-thumb       { background: var(--tab-map); }
+.mode-pill[data-accent="logs"].dry .mode-pill-thumb       { background: #4e555c; }
+.mode-pill[data-accent="logs"].real .mode-pill-thumb      { background: var(--tab-logs); }
 
 .mode-opt {
   position: relative;

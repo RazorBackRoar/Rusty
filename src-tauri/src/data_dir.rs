@@ -234,73 +234,76 @@ mod tests {
 
     #[cfg(target_os = "macos")]
     #[test]
-    fn migrates_legacy_app_data_root_when_canonical_root_is_absent() {
-        let temp = tempfile::tempdir().unwrap();
+    fn migrates_legacy_app_data_root_when_canonical_root_is_absent() -> Result<(), Box<dyn std::error::Error>> {
+        let temp = tempfile::tempdir()?;
         let support = temp.path().join("Library").join("Application Support");
         let legacy = support.join("com.rusty.app");
         let canonical = support.join("com.rusty.desktop");
-        std::fs::create_dir_all(&legacy).unwrap();
-        std::fs::write(legacy.join("memory_bank.sqlite"), b"existing cache").unwrap();
+        std::fs::create_dir_all(&legacy)?;
+        std::fs::write(legacy.join("memory_bank.sqlite"), b"existing cache")?;
 
-        DataDir::at_app_data_root(canonical.clone()).unwrap();
+        DataDir::at_app_data_root(canonical.clone())?;
 
         assert!(!legacy.exists());
         assert_eq!(
-            std::fs::read(canonical.join("memory_bank.sqlite")).unwrap(),
+            std::fs::read(canonical.join("memory_bank.sqlite"))?,
             b"existing cache"
         );
+        Ok(())
     }
 
     #[cfg(target_os = "macos")]
     #[test]
-    fn does_not_merge_or_overwrite_when_canonical_root_already_exists() {
-        let temp = tempfile::tempdir().unwrap();
+    fn does_not_merge_or_overwrite_when_canonical_root_already_exists() -> Result<(), Box<dyn std::error::Error>> {
+        let temp = tempfile::tempdir()?;
         let support = temp.path().join("Library").join("Application Support");
         let legacy = support.join("com.rusty.app");
         let canonical = support.join("com.rusty.desktop");
-        std::fs::create_dir_all(&legacy).unwrap();
-        std::fs::create_dir_all(&canonical).unwrap();
-        std::fs::write(legacy.join("memory_bank.sqlite"), b"legacy cache").unwrap();
-        std::fs::write(canonical.join("memory_bank.sqlite"), b"canonical cache").unwrap();
+        std::fs::create_dir_all(&legacy)?;
+        std::fs::create_dir_all(&canonical)?;
+        std::fs::write(legacy.join("memory_bank.sqlite"), b"legacy cache")?;
+        std::fs::write(canonical.join("memory_bank.sqlite"), b"canonical cache")?;
 
-        DataDir::at_app_data_root(canonical.clone()).unwrap();
+        DataDir::at_app_data_root(canonical.clone())?;
 
         assert_eq!(
-            std::fs::read(legacy.join("memory_bank.sqlite")).unwrap(),
+            std::fs::read(legacy.join("memory_bank.sqlite"))?,
             b"legacy cache"
         );
         assert_eq!(
-            std::fs::read(canonical.join("memory_bank.sqlite")).unwrap(),
+            std::fs::read(canonical.join("memory_bank.sqlite"))?,
             b"canonical cache"
         );
+        Ok(())
     }
 
     #[cfg(target_os = "macos")]
     #[test]
-    fn moves_missing_legacy_entries_without_overwriting_canonical_entries() {
-        let temp = tempfile::tempdir().unwrap();
+    fn moves_missing_legacy_entries_without_overwriting_canonical_entries() -> Result<(), Box<dyn std::error::Error>> {
+        let temp = tempfile::tempdir()?;
         let support = temp.path().join("Library").join("Application Support");
         let legacy = support.join("com.rusty.app");
         let canonical = support.join("com.rusty.desktop");
-        std::fs::create_dir_all(legacy.join("logs")).unwrap();
-        std::fs::create_dir_all(canonical.join("logs")).unwrap();
-        std::fs::write(legacy.join("memory_bank.sqlite"), b"legacy cache").unwrap();
-        std::fs::write(legacy.join("logs").join("rusty.log"), b"legacy log").unwrap();
-        std::fs::write(canonical.join("logs").join("rusty.log"), b"canonical log").unwrap();
+        std::fs::create_dir_all(legacy.join("logs"))?;
+        std::fs::create_dir_all(canonical.join("logs"))?;
+        std::fs::write(legacy.join("memory_bank.sqlite"), b"legacy cache")?;
+        std::fs::write(legacy.join("logs").join("rusty.log"), b"legacy log")?;
+        std::fs::write(canonical.join("logs").join("rusty.log"), b"canonical log")?;
 
-        DataDir::at_app_data_root(canonical.clone()).unwrap();
+        DataDir::at_app_data_root(canonical.clone())?;
 
         assert_eq!(
-            std::fs::read(canonical.join("memory_bank.sqlite")).unwrap(),
+            std::fs::read(canonical.join("memory_bank.sqlite"))?,
             b"legacy cache"
         );
         assert_eq!(
-            std::fs::read(canonical.join("logs").join("rusty.log")).unwrap(),
+            std::fs::read(canonical.join("logs").join("rusty.log"))?,
             b"canonical log"
         );
         assert_eq!(
-            std::fs::read(legacy.join("logs").join("rusty.log")).unwrap(),
+            std::fs::read(legacy.join("logs").join("rusty.log"))?,
             b"legacy log"
         );
+        Ok(())
     }
 }

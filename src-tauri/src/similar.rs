@@ -88,8 +88,11 @@ pub fn find_similar_videos(
         paths.len()
     ));
 
-    let tmp_root = std::env::temp_dir().join(format!("rusty-similar-{}", std::process::id()));
-    let _ = fs::create_dir_all(&tmp_root);
+    let tmp_dir = match tempfile::Builder::new().prefix("rusty-similar-").tempdir() {
+        Ok(dir) => dir,
+        Err(e) => return Err(AppError::Io(e)),
+    };
+    let tmp_root = tmp_dir.path();
 
     let results: Vec<Option<Fingerprint>> = paths
         .par_iter()
@@ -97,7 +100,7 @@ pub fn find_similar_videos(
             if cancel.load(Ordering::SeqCst) {
                 return None;
             }
-            match fingerprint_video(path, &ffmpeg, &ffprobe, &tmp_root) {
+            match fingerprint_video(path, &ffmpeg, &ffprobe, tmp_root) {
                 Ok(fp) => Some(fp),
                 Err(e) => {
                     logs.warn(format!("similar skip {}: {e}", path.display()));
@@ -107,7 +110,7 @@ pub fn find_similar_videos(
         })
         .collect();
 
-    let _ = fs::remove_dir_all(&tmp_root);
+    // tmp_dir is automatically cleaned up when dropped.
 
     if cancel.load(Ordering::SeqCst) {
         return Err(AppError::BadInput("similar search cancelled".into()));

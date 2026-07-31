@@ -42,15 +42,6 @@ const el = (tag, attrs = {}, ...children) => {
   return node;
 };
 
-const svgEl = (tag, attrs = {}) => {
-  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null) continue;
-    node.setAttribute(k, v);
-  }
-  return node;
-};
-
 const fmtBytes = (n) => {
   if (n == null) return '–';
   const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -604,20 +595,6 @@ function appendMapNode(container, node, prefix, isLast) {
 }
 
 
-
-function renderDupDir(d) {
-  const paths = el('div', { class: 'dup-dir-paths' });
-  for (const p of d.dirs) paths.appendChild(el('div', { class: 'dup-dir-path' }, p));
-  const wasted = d.total_bytes * (d.dirs.length - 1);
-  return el('div', { class: 'dup-dir' },
-    el('div', { class: 'dup-dir-head' },
-      el('span', { class: 'dup-dir-title' },
-        `${d.dirs.length} identical folders · ${d.file_count} files each`),
-      el('span', { class: 'group-wasted' }, `${fmtBytes(wasted)} wasted`)
-    ),
-    paths
-  );
-}
 
 function renderGroup(g, idx) {
   const body = el('div', { class: 'group-body' });

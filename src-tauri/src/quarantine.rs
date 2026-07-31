@@ -561,6 +561,71 @@ mod tests {
         assert_eq!(loaded.entries[0].status, "moved");
     }
 
+    fn make_test_entry(hash: &str, action: PlanAction) -> PlanEntry {
+        PlanEntry {
+            path: format!("/tmp/{hash}.jpg"),
+            normalized_path: format!("/tmp/{hash}.jpg"),
+            hash: hash.to_string(),
+            size: 42,
+            action,
+            reason: "".to_string(),
+        }
+    }
+
+    #[test]
+    fn validate_plan_empty_is_ok() {
+        assert!(validate_plan(&[]).is_ok());
+    }
+
+    #[test]
+    fn validate_plan_all_keepers_is_ok() {
+        let plan = vec![
+            make_test_entry("hash1", PlanAction::Keep),
+            make_test_entry("hash1", PlanAction::Keep),
+        ];
+        assert!(validate_plan(&plan).is_ok());
+    }
+
+    #[test]
+    fn validate_plan_mixed_is_ok() {
+        let plan = vec![
+            make_test_entry("hash1", PlanAction::Keep),
+            make_test_entry("hash1", PlanAction::Quarantine),
+            make_test_entry("hash2", PlanAction::Quarantine),
+            make_test_entry("hash2", PlanAction::Keep),
+        ];
+        assert!(validate_plan(&plan).is_ok());
+    }
+
+    #[test]
+    fn validate_plan_would_delete_unique_copy() {
+        let plan = vec![
+            make_test_entry("hash1", PlanAction::Quarantine),
+            make_test_entry("hash1", PlanAction::Quarantine),
+        ];
+        let result = validate_plan(&plan);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            crate::error::AppError::WouldDeleteUniqueCopy(hash) => assert_eq!(hash, "hash1"),
+            _ => panic!("Expected WouldDeleteUniqueCopy error"),
+        }
+    }
+
+    #[test]
+    fn validate_plan_multiple_hashes_one_invalid() {
+        let plan = vec![
+            make_test_entry("hash1", PlanAction::Keep),
+            make_test_entry("hash1", PlanAction::Quarantine),
+            make_test_entry("hash2", PlanAction::Quarantine),
+        ];
+        let result = validate_plan(&plan);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            crate::error::AppError::WouldDeleteUniqueCopy(hash) => assert_eq!(hash, "hash2"),
+            _ => panic!("Expected WouldDeleteUniqueCopy error"),
+        }
+    }
+
     #[test]
     fn preview_formats_plan_entries_correctly() {
         let plan = vec![

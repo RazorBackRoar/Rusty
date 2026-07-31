@@ -35,10 +35,9 @@ pub fn build_folder_map(root: &Path, dir_counts: &HashMap<String, DirFileCount>)
 
     // Ensure the root is present even when the walk recorded no files under it.
     let mut counts = dir_counts.clone();
-    counts.entry(root_norm.clone()).or_insert(DirFileCount {
-        depth: 0,
-        files: 0,
-    });
+    counts
+        .entry(root_norm.clone())
+        .or_insert(DirFileCount { depth: 0, files: 0 });
 
     let mut children_of: HashMap<String, Vec<String>> = HashMap::new();
     for path in counts.keys() {
@@ -99,34 +98,10 @@ mod tests {
     fn rolls_up_subtree_file_counts() {
         let root = PathBuf::from("/Photos");
         let mut counts = HashMap::new();
-        counts.insert(
-            "/Photos".into(),
-            DirFileCount {
-                depth: 0,
-                files: 2,
-            },
-        );
-        counts.insert(
-            "/Photos/A".into(),
-            DirFileCount {
-                depth: 1,
-                files: 3,
-            },
-        );
-        counts.insert(
-            "/Photos/A/B".into(),
-            DirFileCount {
-                depth: 2,
-                files: 5,
-            },
-        );
-        counts.insert(
-            "/Photos/C".into(),
-            DirFileCount {
-                depth: 1,
-                files: 1,
-            },
-        );
+        counts.insert("/Photos".into(), DirFileCount { depth: 0, files: 2 });
+        counts.insert("/Photos/A".into(), DirFileCount { depth: 1, files: 3 });
+        counts.insert("/Photos/A/B".into(), DirFileCount { depth: 2, files: 5 });
+        counts.insert("/Photos/C".into(), DirFileCount { depth: 1, files: 1 });
 
         let tree = build_folder_map(&root, &counts);
         assert_eq!(tree.name, "Photos");

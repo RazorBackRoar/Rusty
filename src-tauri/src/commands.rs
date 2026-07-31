@@ -682,11 +682,10 @@ pub async fn get_app_info() -> Result<crate::appinfo::AppInfo, AppError> {
 #[tauri::command]
 pub async fn check_for_updates() -> Result<crate::updates::UpdateResult, AppError> {
     let current = env!("CARGO_PKG_VERSION").to_string();
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        crate::updates::check_for_updates(&current)
-    })
-    .await
-    .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
+    let result =
+        tauri::async_runtime::spawn_blocking(move || crate::updates::check_for_updates(&current))
+            .await
+            .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
     Ok(result)
 }
 
@@ -741,10 +740,9 @@ mod tests {
 
     #[test]
     fn scan_request_accepts_commit_results_false() {
-        let req: ScanRequest = serde_json::from_str(
-            r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#,
-        )
-        .unwrap();
+        let req: ScanRequest =
+            serde_json::from_str(r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#)
+                .unwrap();
         assert!(!req.commit_results);
     }
 

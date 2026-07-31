@@ -581,8 +581,15 @@ mod tests {
             action: PlanAction::Quarantine,
             reason: "duplicate".into(),
         };
-        push_manifest_entry(&mut manifest, &path, "moved", &entry, "/tmp/q/victim.jpg", None)
-            .unwrap();
+        push_manifest_entry(
+            &mut manifest,
+            &path,
+            "moved",
+            &entry,
+            "/tmp/q/victim.jpg",
+            None,
+        )
+        .unwrap();
 
         let loaded: Manifest = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(loaded.entries.len(), 1);

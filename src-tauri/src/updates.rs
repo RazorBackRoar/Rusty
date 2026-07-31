@@ -185,4 +185,26 @@ mod tests {
         assert_eq!(compare_versions("v1.1.0", "1.0.0"), 1);
         assert_eq!(compare_versions("1.0.0", "v1.0.0"), 0);
     }
+
+    #[test]
+    fn parse_version_edge_cases() {
+        // Happy path
+        assert_eq!(parse_version("1.2.3"), Some((1, 2, 3)));
+        assert_eq!(parse_version("v1.2.3"), Some((1, 2, 3)));
+        assert_eq!(parse_version("  v1.2.3  "), Some((1, 2, 3)));
+
+        // Missing minor/patch
+        assert_eq!(parse_version("1"), Some((1, 0, 0)));
+        assert_eq!(parse_version("1.2"), Some((1, 2, 0)));
+
+        // Extra characters in patch or beyond
+        assert_eq!(parse_version("1.2.3-beta"), Some((1, 2, 3)));
+        assert_eq!(parse_version("1.2.3.4"), Some((1, 2, 3)));
+
+        // Invalid parts
+        assert_eq!(parse_version(""), None);
+        assert_eq!(parse_version("a.b.c"), None);
+        assert_eq!(parse_version("1.b.c"), Some((1, 0, 0))); // minor parses as 0
+        assert_eq!(parse_version("1.2.c"), Some((1, 2, 0))); // patch parses as 0
+    }
 }

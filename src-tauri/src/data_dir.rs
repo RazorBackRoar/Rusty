@@ -209,8 +209,7 @@ fn remove_dir_if_empty(path: &Path) -> AppResult<()> {
 
 #[cfg(test)]
 mod tests {
-
-
+    use super::*;
 
 
     #[cfg(target_os = "macos")]

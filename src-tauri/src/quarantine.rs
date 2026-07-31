@@ -420,10 +420,20 @@ fn append_quarantine_log(out_dir: &Path, manifest: &Manifest) -> std::io::Result
 }
 
 fn csv_field(s: &str) -> String {
-    if s.contains(',') || s.contains('"') || s.contains('\n') {
-        format!("\"{}\"", s.replace('"', "\"\""))
+    let mut out = s.to_string();
+    if out.starts_with('=')
+        || out.starts_with('+')
+        || out.starts_with('-')
+        || out.starts_with('@')
+        || out.starts_with('\t')
+        || out.starts_with('\r')
+    {
+        out.insert(0, '\'');
+    }
+    if out.contains(',') || out.contains('"') || out.contains('\n') {
+        format!("\"{}\"", out.replace('"', "\"\""))
     } else {
-        s.to_string()
+        out
     }
 }
 
@@ -688,5 +698,24 @@ mod tests {
         let loaded: Manifest = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(loaded.entries.len(), 1);
         assert_eq!(loaded.entries[0].quarantine_path, "/tmp/q/victim.jpg");
+    }
+
+    #[test]
+    fn test_csv_field_escaping() {
+        assert_eq!(csv_field("normal"), "normal");
+        assert_eq!(csv_field("has,comma"), "\"has,comma\"");
+        assert_eq!(csv_field("has\"quote"), "\"has\"\"quote\"");
+        assert_eq!(csv_field("has\nnewline"), "\"has\nnewline\"");
+
+        // CSV Injection prevention
+        assert_eq!(csv_field("=cmd"), "'=cmd");
+        assert_eq!(csv_field("+cmd"), "'+cmd");
+        assert_eq!(csv_field("-cmd"), "'-cmd");
+        assert_eq!(csv_field("@cmd"), "'@cmd");
+        assert_eq!(csv_field("\tcmd"), "'\tcmd");
+        assert_eq!(csv_field("\rcmd"), "'\rcmd");
+
+        // Both injection prevention and standard escaping
+        assert_eq!(csv_field("=cmd,with,comma"), "\"'=cmd,with,comma\"");
     }
 }

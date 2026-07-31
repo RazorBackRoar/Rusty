@@ -211,6 +211,7 @@ fn remove_dir_if_empty(path: &Path) -> AppResult<()> {
 mod tests {
     use super::*;
 
+
     #[cfg(target_os = "macos")]
     #[test]
     fn macos_default_root_uses_bundle_identifier() {
@@ -226,10 +227,7 @@ mod tests {
     #[test]
     fn macos_cache_dir_uses_display_name() {
         let cache = default_cache_for_home(Path::new("/Users/example"));
-        assert_eq!(
-            cache,
-            PathBuf::from("/Users/example/Library/Caches/Rusty")
-        );
+        assert_eq!(cache, PathBuf::from("/Users/example/Library/Caches/Rusty"));
     }
 
     #[cfg(target_os = "macos")]

@@ -256,12 +256,7 @@ fn probe_duration(ffprobe: &Path, path: &Path) -> Option<f64> {
 
 fn extract_frame(ffmpeg: &Path, input: &Path, seconds: f64, out: &Path) -> Result<(), String> {
     let status = Command::new(ffmpeg)
-        .args([
-            "-y",
-            "-ss",
-            &format!("{seconds:.3}"),
-            "-i",
-        ])
+        .args(["-y", "-ss", &format!("{seconds:.3}"), "-i"])
         .arg(input)
         .args(["-frames:v", "1", "-q:v", "3"])
         .arg(out)
@@ -344,9 +339,14 @@ fn dct1d(input: &[f64; 32]) -> [f64; 32] {
     for k in 0..32 {
         let mut sum = 0.0;
         for (i, v) in input.iter().enumerate() {
-            sum += v * ((std::f64::consts::PI * k as f64 * (2.0 * i as f64 + 1.0)) / (2.0 * n)).cos();
+            sum +=
+                v * ((std::f64::consts::PI * k as f64 * (2.0 * i as f64 + 1.0)) / (2.0 * n)).cos();
         }
-        let alpha = if k == 0 { (1.0 / n).sqrt() } else { (2.0 / n).sqrt() };
+        let alpha = if k == 0 {
+            (1.0 / n).sqrt()
+        } else {
+            (2.0 / n).sqrt()
+        };
         out[k] = alpha * sum;
     }
     out
@@ -464,14 +464,11 @@ fn cluster_fingerprints(fps: &[Fingerprint], max_distance: u32) -> Vec<SimilarCl
         });
     }
     clusters.sort_by(|a, b| {
-        b.files
-            .len()
-            .cmp(&a.files.len())
-            .then_with(|| {
-                a.avg_distance
-                    .partial_cmp(&b.avg_distance)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
+        b.files.len().cmp(&a.files.len()).then_with(|| {
+            a.avg_distance
+                .partial_cmp(&b.avg_distance)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     });
     clusters
 }
@@ -506,7 +503,12 @@ mod tests {
     fn cluster_joins_close_fingerprints() {
         let mk = |path: &str, hashes: Vec<u64>| Fingerprint {
             path: PathBuf::from(path),
-            orientations: [hashes.clone(), hashes.clone(), hashes.clone(), hashes.clone()],
+            orientations: [
+                hashes.clone(),
+                hashes.clone(),
+                hashes.clone(),
+                hashes.clone(),
+            ],
         };
         let shared = vec![0u64; SAMPLE_FRAMES];
         let other = vec![u64::MAX; SAMPLE_FRAMES];

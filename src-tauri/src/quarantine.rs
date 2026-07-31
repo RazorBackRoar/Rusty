@@ -562,6 +562,37 @@ mod tests {
     }
 
     #[test]
+    fn preview_formats_plan_entries_correctly() {
+        let plan = vec![
+            PlanEntry {
+                path: "/a/keep.txt".into(),
+                normalized_path: "/a/keep.txt".into(),
+                hash: "hash1".into(),
+                size: 1024,
+                action: PlanAction::Keep,
+                reason: "first seen".into(),
+            },
+            PlanEntry {
+                path: "/b/quarantine.txt".into(),
+                normalized_path: "/b/quarantine.txt".into(),
+                hash: "hash1".into(),
+                size: 1024,
+                action: PlanAction::Quarantine,
+                reason: "duplicate".into(),
+            },
+        ];
+
+        let out = preview(&plan);
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0], "KEEP             1024 bytes  /a/keep.txt  (first seen)");
+        assert_eq!(out[1], "QUARANT          1024 bytes  /b/quarantine.txt  (duplicate)");
+
+        let empty: Vec<PlanEntry> = vec![];
+        let out_empty = preview(&empty);
+        assert_eq!(out_empty.len(), 0);
+    }
+
+    #[test]
     fn push_manifest_entry_appends_and_persists_incrementally() {
         let tmp = tempfile::tempdir().unwrap();
         let path = tmp.path().join("run.json");

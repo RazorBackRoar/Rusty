@@ -1163,11 +1163,9 @@ fn multiple_folders_are_counted_separately_with_combined_totals() {
 
 fn walk_files(root: &PathBuf) -> Vec<PathBuf> {
     let mut out = Vec::new();
-    for entry in jwalk::WalkDir::new(root) {
-        if let Ok(e) = entry {
-            if e.file_type().is_file() {
-                out.push(e.path());
-            }
+    for e in jwalk::WalkDir::new(root).into_iter().flatten() {
+        if e.file_type().is_file() {
+            out.push(e.path());
         }
     }
     out.sort();

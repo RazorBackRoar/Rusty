@@ -210,6 +210,9 @@ fn remove_dir_if_empty(path: &Path) -> AppResult<()> {
 #[cfg(test)]
 mod tests {
 
+
+
+
     #[cfg(target_os = "macos")]
     #[test]
     fn macos_default_root_uses_bundle_identifier() {

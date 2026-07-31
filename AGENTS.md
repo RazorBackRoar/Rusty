@@ -102,8 +102,20 @@ These behaviors are the product. Do not change them unless explicitly requested:
 - Tab switches must feel instant — no bounce, delay, or stutter.
 
 
+## Jules Repository Contract
+
+Jules reads this repository-root `AGENTS.md` when it clones the repository. Parent workspace policy files are not available in that clone.
+
+- Jules runs tasks in an Ubuntu VM; macOS-specific behavior, Tauri packaging, Finder integration, quarantine safety, and Apple Silicon runtime behavior are not proven there.
+- The repository's GitHub macOS `quality` workflow is authoritative for merge readiness.
+- Daily audits must inspect existing open and recently closed PRs before proposing work, avoid duplicates, and open at most one focused PR per task.
+- `sentinel-*` security, `bolt-*` performance, and `palette-*` design branches always require human review.
+- `routine-*` is reserved for the narrow low-risk test/documentation/template allowlist enforced by CI.
+- PR descriptions must list changed files, risk, verification commands and results, benchmark evidence when relevant, and unverified paths.
+- Never auto-merge runtime, dependency, lockfile, workflow, packaging, release, privacy, file-operation, quarantine, or user-data changes.
+
 ## Automated Agent & Jules Integration Guidelines
-- **Jules PR Auto-Merge**: Automated PRs created on branches starting with `sentinel-`, `bolt-`, or `palette-` are handled by GitHub Actions (`.github/workflows/jules-automerge.yml`).
+- **Jules PR Review**: `sentinel-`, `bolt-`, and `palette-` PRs require human review; only `routine-` PRs inside the workflow allowlist may auto-merge after `quality` passes.
 - **No Duplicate Issue/PR Reopening**: Jules subagents must verify existing closed and open PRs before proposing repetitive fixes or contact info updates.
 - **Branch Cleanup**: Head branches are deleted automatically upon squash-merge.
 

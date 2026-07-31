@@ -272,8 +272,6 @@ pub fn apply(
                             "manifest write failed; reverted move of {}",
                             entry.path
                         ));
-                        quarantined -= 1;
-                        bytes_freed -= entry.size;
                     }
                     return Err(e);
                 }

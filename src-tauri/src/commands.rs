@@ -691,11 +691,21 @@ pub async fn check_for_updates() -> Result<crate::updates::UpdateResult, AppErro
 }
 
 fn csv_escape(s: &str) -> String {
-    if s.contains(',') || s.contains('"') || s.contains('\n') {
-        let escaped = s.replace('"', "\"\"");
+    let mut out = s.to_string();
+    if out.starts_with('=')
+        || out.starts_with('+')
+        || out.starts_with('-')
+        || out.starts_with('@')
+        || out.starts_with('\t')
+        || out.starts_with('\r')
+    {
+        out.insert(0, '\'');
+    }
+    if out.contains(',') || out.contains('"') || out.contains('\n') {
+        let escaped = out.replace('"', "\"\"");
         format!("\"{escaped}\"")
     } else {
-        s.to_string()
+        out
     }
 }
 
@@ -785,5 +795,24 @@ mod tests {
         assert_eq!(kept.scan_id, 2);
         assert_eq!(kept.roots, vec![PathBuf::from("/downloads")]);
         assert_eq!(current_plan.lock()[0].path, "/downloads/other.jpg");
+    }
+
+    #[test]
+    fn test_csv_escape() {
+        assert_eq!(csv_escape("normal"), "normal");
+        assert_eq!(csv_escape("has,comma"), "\"has,comma\"");
+        assert_eq!(csv_escape("has\"quote"), "\"has\"\"quote\"");
+        assert_eq!(csv_escape("has\nnewline"), "\"has\nnewline\"");
+
+        // CSV Injection prevention
+        assert_eq!(csv_escape("=cmd"), "'=cmd");
+        assert_eq!(csv_escape("+cmd"), "'+cmd");
+        assert_eq!(csv_escape("-cmd"), "'-cmd");
+        assert_eq!(csv_escape("@cmd"), "'@cmd");
+        assert_eq!(csv_escape("\tcmd"), "'\tcmd");
+        assert_eq!(csv_escape("\rcmd"), "'\rcmd");
+
+        // Both injection prevention and standard escaping
+        assert_eq!(csv_escape("=cmd,with,comma"), "\"'=cmd,with,comma\"");
     }
 }

@@ -269,3 +269,101 @@ fn pick_keeper(files: &[ScannedFile], rule: KeeperRule) -> usize {
         .map(|(i, _)| i)
         .unwrap_or(0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scanner::{MediaKind, ScannedFile};
+
+    fn dummy_file(name: &str, hash: &str, size: i64) -> ScannedFile {
+        ScannedFile {
+            hash: hash.to_string(),
+            path: format!("/path/to/{}", name),
+            normalized_path: format!("/path/to/{}", name),
+            file_name: name.to_string(),
+            media_kind: MediaKind::Other,
+            source_root: "/path/to".to_string(),
+            size,
+            modified_ns: 0,
+            reused_from_cache: false,
+            moved_from: None,
+            dev: 1,
+            ino: 1,
+        }
+    }
+
+    #[test]
+    fn test_empty() {
+        let report = group_duplicates(&[]);
+        assert_eq!(report.groups.len(), 0);
+        assert_eq!(report.total_files, 0);
+        assert_eq!(report.total_duplicate_files, 0);
+        assert_eq!(report.total_wasted_bytes, 0);
+        assert_eq!(report.largest_single_file_in_dup, 0);
+    }
+
+    #[test]
+    fn test_no_duplicates() {
+        let files = vec![
+            dummy_file("a.txt", "hash1", 100),
+            dummy_file("b.txt", "hash2", 200),
+        ];
+        let report = group_duplicates(&files);
+        assert_eq!(report.groups.len(), 0);
+        assert_eq!(report.total_files, 2);
+        assert_eq!(report.total_duplicate_files, 0);
+        assert_eq!(report.total_wasted_bytes, 0);
+    }
+
+    #[test]
+    fn test_single_group() {
+        let files = vec![
+            dummy_file("a.txt", "hash1", 100),
+            dummy_file("b.txt", "hash1", 100),
+        ];
+        let report = group_duplicates(&files);
+        assert_eq!(report.groups.len(), 1);
+        assert_eq!(report.total_files, 2);
+        assert_eq!(report.total_duplicate_files, 2);
+        assert_eq!(report.total_wasted_bytes, 100);
+        assert_eq!(report.largest_single_file_in_dup, 100);
+
+        let group = &report.groups[0];
+        assert_eq!(group.hash, "hash1");
+        assert_eq!(group.copies, 2);
+        assert_eq!(group.wasted_bytes, 100);
+    }
+
+    #[test]
+    fn test_multiple_groups_and_sorting() {
+        let files = vec![
+            dummy_file("a1.txt", "hash_a", 100),
+            dummy_file("a2.txt", "hash_a", 100),
+            // group_a wasted: 100
+
+            dummy_file("b1.txt", "hash_b", 50),
+            dummy_file("b2.txt", "hash_b", 50),
+            dummy_file("b3.txt", "hash_b", 50),
+            // group_b wasted: 100
+
+            dummy_file("c1.txt", "hash_c", 300),
+            dummy_file("c2.txt", "hash_c", 300),
+            // group_c wasted: 300
+        ];
+        let report = group_duplicates(&files);
+        assert_eq!(report.groups.len(), 3);
+        assert_eq!(report.total_wasted_bytes, 500);
+        assert_eq!(report.largest_single_file_in_dup, 300);
+
+        // sorting: largest wasted space first
+        // group_c should be first (wasted 300)
+        assert_eq!(report.groups[0].hash, "hash_c");
+
+        // group_a and group_b both waste 100.
+        // tie-breaker: largest file size.
+        // group_a file size is 100, group_b file size is 50.
+        // so group_a should be second.
+        assert_eq!(report.groups[1].hash, "hash_a");
+        assert_eq!(report.groups[2].hash, "hash_b");
+    }
+}

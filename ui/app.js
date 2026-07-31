@@ -605,20 +605,6 @@ function appendMapNode(container, node, prefix, isLast) {
 
 
 
-function renderDupDir(d) {
-  const paths = el('div', { class: 'dup-dir-paths' });
-  for (const p of d.dirs) paths.appendChild(el('div', { class: 'dup-dir-path' }, p));
-  const wasted = d.total_bytes * (d.dirs.length - 1);
-  return el('div', { class: 'dup-dir' },
-    el('div', { class: 'dup-dir-head' },
-      el('span', { class: 'dup-dir-title' },
-        `${d.dirs.length} identical folders · ${d.file_count} files each`),
-      el('span', { class: 'group-wasted' }, `${fmtBytes(wasted)} wasted`)
-    ),
-    paths
-  );
-}
-
 function renderGroup(g, idx) {
   const body = el('div', { class: 'group-body' });
   for (const f of g.files) {

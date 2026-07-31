@@ -97,21 +97,21 @@ pub fn group_duplicates(files: &[ScannedFile]) -> DedupeReport {
 /// Subdirectories are not considered here — this catches the common
 /// "copied a folder of files" case.
 pub fn find_duplicate_dirs(files: &[ScannedFile]) -> Vec<DuplicateDir> {
-    let mut dir_files: HashMap<String, BTreeMap<String, String>> = HashMap::new();
-    let mut dir_bytes: HashMap<String, i64> = HashMap::new();
+    let mut dir_files: HashMap<&str, BTreeMap<&str, &str>> = HashMap::new();
+    let mut dir_bytes: HashMap<&str, i64> = HashMap::new();
     for f in files {
         let parent = std::path::Path::new(&f.normalized_path)
             .parent()
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_default();
+            .and_then(|p| p.to_str())
+            .unwrap_or("");
         dir_files
-            .entry(parent.clone())
+            .entry(parent)
             .or_default()
-            .insert(f.file_name.clone(), f.hash.clone());
+            .insert(f.file_name.as_str(), f.hash.as_str());
         *dir_bytes.entry(parent).or_insert(0) += f.size;
     }
 
-    let mut by_sig: HashMap<String, Vec<(String, i64, i64)>> = HashMap::new();
+    let mut by_sig: HashMap<String, Vec<(&str, i64, i64)>> = HashMap::new();
     for (dir, fmap) in &dir_files {
         if fmap.is_empty() {
             continue;
@@ -128,7 +128,7 @@ pub fn find_duplicate_dirs(files: &[ScannedFile]) -> Vec<DuplicateDir> {
         by_sig
             .entry(sig)
             .or_default()
-            .push((dir.clone(), fmap.len() as i64, bytes));
+            .push((*dir, fmap.len() as i64, bytes));
     }
 
     let mut out: Vec<DuplicateDir> = by_sig
@@ -141,7 +141,7 @@ pub fn find_duplicate_dirs(files: &[ScannedFile]) -> Vec<DuplicateDir> {
             let wasted_bytes = total_bytes * (dirs.len() as i64 - 1);
             DuplicateDir {
                 signature: sig.chars().take(12).collect(),
-                dirs: dirs.into_iter().map(|(d, _, _)| d).collect(),
+                dirs: dirs.into_iter().map(|(d, _, _)| d.to_owned()).collect(),
                 file_count,
                 total_bytes,
                 wasted_bytes,

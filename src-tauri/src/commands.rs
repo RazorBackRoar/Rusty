@@ -691,11 +691,18 @@ pub async fn check_for_updates() -> Result<crate::updates::UpdateResult, AppErro
 }
 
 fn csv_escape(s: &str) -> String {
-    if s.contains(',') || s.contains('"') || s.contains('\n') {
-        let escaped = s.replace('"', "\"\"");
-        format!("\"{escaped}\"")
+    let mut escaped = s.to_string();
+
+    // Mitigate CSV injection (Formula Injection)
+    if escaped.starts_with('=') || escaped.starts_with('+') || escaped.starts_with('-') || escaped.starts_with('@') || escaped.starts_with('\t') || escaped.starts_with('\r') {
+        escaped = format!("'{escaped}");
+    }
+
+    if escaped.contains(',') || escaped.contains('"') || escaped.contains('\n') {
+        let final_escaped = escaped.replace('"', "\"\"");
+        format!("\"{final_escaped}\"")
     } else {
-        s.to_string()
+        escaped
     }
 }
 
@@ -703,6 +710,28 @@ fn csv_escape(s: &str) -> String {
 mod tests {
     use super::*;
     use crate::dedupe::PlanAction;
+
+    #[test]
+    fn test_csv_escape() {
+        // Normal string
+        assert_eq!(csv_escape("hello"), "hello");
+
+        // Commas and quotes
+        assert_eq!(csv_escape("hello, world"), "\"hello, world\"");
+        assert_eq!(csv_escape("hello \"world\""), "\"hello \"\"world\"\"\"");
+        assert_eq!(csv_escape("hello\nworld"), "\"hello\nworld\"");
+
+        // Formula injection mitigation
+        assert_eq!(csv_escape("=cmd|' /C calc'!A0"), "'=cmd|' /C calc'!A0");
+        assert_eq!(csv_escape("+1-2"), "'+1-2");
+        assert_eq!(csv_escape("-1+2"), "'-1+2");
+        assert_eq!(csv_escape("@SUM(1+1)"), "'@SUM(1+1)");
+        assert_eq!(csv_escape("\tformula"), "'\tformula");
+        assert_eq!(csv_escape("\rformula"), "'\rformula");
+
+        // Formula injection with quotes
+        assert_eq!(csv_escape("=cmd,\"arg\""), "\"'=cmd,\"\"arg\"\"\"");
+    }
 
     fn sample_plan(path: &str) -> Vec<PlanEntry> {
         vec![PlanEntry {

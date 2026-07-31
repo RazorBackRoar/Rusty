@@ -584,47 +584,61 @@ pub async fn export_report(
                 .data
                 .exports_dir
                 .join(format!("Rusty-Report-{ts}.json"));
-            let bytes = serde_json::to_vec_pretty(&serde_json::json!({
-                "mode": last.mode,
-                "roots": last.roots.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>(),
-                "scan_id": last.scan_id,
-                "report": last.report,
-            }))?;
-            std::fs::write(&path, &bytes)?;
+            let path_clone = path.clone();
+
+            let bytes_written = tauri::async_runtime::spawn_blocking(move || {
+                let bytes = serde_json::to_vec_pretty(&serde_json::json!({
+                    "mode": last.mode,
+                    "roots": last.roots.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>(),
+                    "scan_id": last.scan_id,
+                    "report": last.report,
+                }))?;
+                std::fs::write(&path_clone, &bytes)?;
+                Ok::<_, AppError>(bytes.len())
+            })
+            .await
+            .map_err(|e| AppError::BadInput(format!("export task join error: {e}")))??;
+
             state
                 .logs
                 .info(format!("exported JSON: {}", path.display()));
             Ok(ExportResult {
                 path: path.to_string_lossy().into_owned(),
                 format: "json".into(),
-                bytes_written: bytes.len() as u64,
+                bytes_written: bytes_written as u64,
             })
         }
         "csv" => {
             let path = state.data.exports_dir.join(format!("Rusty-Scan-{ts}"));
-            std::fs::create_dir_all(&path)?;
-            let report_path = path.join("Rusty-Report.csv");
-            let mut out = String::from(
-                "hash,media_kind,group_size_bytes,copies,wasted_bytes,path,normalized_path,source_root\n",
-            );
-            for group in &last.report.groups {
-                for file in &group.files {
-                    out.push_str(&format!(
-                        "{},{},{},{},{},{},{},{}\n",
-                        group.hash,
-                        group.media_kind.as_str(),
-                        group.size,
-                        group.copies,
-                        group.wasted_bytes,
-                        csv_escape(&file.path),
-                        csv_escape(&file.normalized_path),
-                        csv_escape(&file.source_root)
-                    ));
-                }
-            }
-            std::fs::write(&report_path, out.as_bytes())?;
+            let path_clone = path.clone();
 
-            let bytes_written = out.len();
+            let bytes_written = tauri::async_runtime::spawn_blocking(move || {
+                std::fs::create_dir_all(&path_clone)?;
+                let report_path = path_clone.join("Rusty-Report.csv");
+                let mut out = String::from(
+                    "hash,media_kind,group_size_bytes,copies,wasted_bytes,path,normalized_path,source_root\n",
+                );
+                for group in &last.report.groups {
+                    for file in &group.files {
+                        out.push_str(&format!(
+                            "{},{},{},{},{},{},{},{}\n",
+                            group.hash,
+                            group.media_kind.as_str(),
+                            group.size,
+                            group.copies,
+                            group.wasted_bytes,
+                            csv_escape(&file.path),
+                            csv_escape(&file.normalized_path),
+                            csv_escape(&file.source_root)
+                        ));
+                    }
+                }
+                std::fs::write(&report_path, out.as_bytes())?;
+                Ok::<_, AppError>(out.len())
+            })
+            .await
+            .map_err(|e| AppError::BadInput(format!("export task join error: {e}")))??;
+
             state.logs.info(format!("exported CSV: {}", path.display()));
             Ok(ExportResult {
                 path: path.to_string_lossy().into_owned(),
@@ -682,11 +696,10 @@ pub async fn get_app_info() -> Result<crate::appinfo::AppInfo, AppError> {
 #[tauri::command]
 pub async fn check_for_updates() -> Result<crate::updates::UpdateResult, AppError> {
     let current = env!("CARGO_PKG_VERSION").to_string();
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        crate::updates::check_for_updates(&current)
-    })
-    .await
-    .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
+    let result =
+        tauri::async_runtime::spawn_blocking(move || crate::updates::check_for_updates(&current))
+            .await
+            .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
     Ok(result)
 }
 
@@ -751,10 +764,9 @@ mod tests {
 
     #[test]
     fn scan_request_accepts_commit_results_false() {
-        let req: ScanRequest = serde_json::from_str(
-            r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#,
-        )
-        .unwrap();
+        let req: ScanRequest =
+            serde_json::from_str(r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#)
+                .unwrap();
         assert!(!req.commit_results);
     }
 

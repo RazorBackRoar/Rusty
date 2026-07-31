@@ -342,10 +342,10 @@ pub fn scan_roots_with_progress(
                 let norm = paths::normalize_for_storage(&dirent.path());
                 let depth = dirent.depth;
                 dir_aggs.entry(norm.clone()).or_default().depth = depth;
-                map_counts.entry(norm.clone()).or_insert(DirFileCount {
-                    depth,
-                    files: 0,
-                }).depth = depth;
+                map_counts
+                    .entry(norm.clone())
+                    .or_insert(DirFileCount { depth, files: 0 })
+                    .depth = depth;
                 if depth >= 1 {
                     discovered_dirs += 1;
                     if discovered_dirs % 64 == 0 {

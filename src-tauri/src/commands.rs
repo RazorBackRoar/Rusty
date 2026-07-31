@@ -607,19 +607,24 @@ pub async fn export_report(
             let mut out = String::from(
                 "hash,media_kind,group_size_bytes,copies,wasted_bytes,path,normalized_path,source_root\n",
             );
+            use std::fmt::Write;
             for group in &last.report.groups {
                 for file in &group.files {
-                    out.push_str(&format!(
-                        "{},{},{},{},{},{},{},{}\n",
+                    let _ = write!(
+                        out,
+                        "{},{},{},{},{},",
                         group.hash,
                         group.media_kind.as_str(),
                         group.size,
                         group.copies,
-                        group.wasted_bytes,
-                        csv_escape(&file.path),
-                        csv_escape(&file.normalized_path),
-                        csv_escape(&file.source_root)
-                    ));
+                        group.wasted_bytes
+                    );
+                    write_csv_escaped(&mut out, &file.path);
+                    out.push(',');
+                    write_csv_escaped(&mut out, &file.normalized_path);
+                    out.push(',');
+                    write_csv_escaped(&mut out, &file.source_root);
+                    out.push('\n');
                 }
             }
             std::fs::write(&report_path, out.as_bytes())?;
@@ -682,20 +687,28 @@ pub async fn get_app_info() -> Result<crate::appinfo::AppInfo, AppError> {
 #[tauri::command]
 pub async fn check_for_updates() -> Result<crate::updates::UpdateResult, AppError> {
     let current = env!("CARGO_PKG_VERSION").to_string();
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        crate::updates::check_for_updates(&current)
-    })
-    .await
-    .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
+    let result =
+        tauri::async_runtime::spawn_blocking(move || crate::updates::check_for_updates(&current))
+            .await
+            .map_err(|e| AppError::BadInput(format!("update check join error: {e}")))?;
     Ok(result)
 }
 
-fn csv_escape(s: &str) -> String {
+fn write_csv_escaped(out: &mut String, s: &str) {
     if s.contains(',') || s.contains('"') || s.contains('\n') {
-        let escaped = s.replace('"', "\"\"");
-        format!("\"{escaped}\"")
+        out.push('"');
+        let mut last_end = 0;
+        for (i, c) in s.char_indices() {
+            if c == '"' {
+                out.push_str(&s[last_end..i]);
+                out.push_str("\"\"");
+                last_end = i + c.len_utf8();
+            }
+        }
+        out.push_str(&s[last_end..]);
+        out.push('"');
     } else {
-        s.to_string()
+        out.push_str(s);
     }
 }
 
@@ -741,10 +754,9 @@ mod tests {
 
     #[test]
     fn scan_request_accepts_commit_results_false() {
-        let req: ScanRequest = serde_json::from_str(
-            r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#,
-        )
-        .unwrap();
+        let req: ScanRequest =
+            serde_json::from_str(r#"{"roots":["/a","/b"],"mode":"dry","commit_results":false}"#)
+                .unwrap();
         assert!(!req.commit_results);
     }
 

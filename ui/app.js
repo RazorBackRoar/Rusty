@@ -42,15 +42,6 @@ const el = (tag, attrs = {}, ...children) => {
   return node;
 };
 
-const svgEl = (tag, attrs = {}) => {
-  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null) continue;
-    node.setAttribute(k, v);
-  }
-  return node;
-};
-
 const fmtBytes = (n) => {
   if (n == null) return '–';
   const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];

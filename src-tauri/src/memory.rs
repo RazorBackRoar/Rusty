@@ -624,3 +624,85 @@ impl MemoryBank {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn lookup_returns_primary_hit_for_exact_path_match() {
+        let dir = tempdir().unwrap();
+        let bank = MemoryBank::open(&dir.path().join("memory.db")).unwrap();
+        let scan_id = bank.start_scan("dry", &["/photos".into()]).unwrap();
+
+        bank.upsert_file(
+            "hash-abc",
+            "/photos/pic.jpg",
+            "/photos/pic.jpg",
+            "pic.jpg",
+            "/photos",
+            2048,
+            1_700_000_000_000,
+            scan_id,
+        )
+        .unwrap();
+
+        let hit = bank
+            .lookup("/photos/pic.jpg", "pic.jpg", 2048, 1_700_000_000_000)
+            .unwrap();
+
+        match hit {
+            CacheHit::Primary { hash, source_root } => {
+                assert_eq!(hash, "hash-abc");
+                assert_eq!(source_root, "/photos");
+            }
+            other => panic!("expected primary cache hit, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn lookup_returns_filename_hit_when_path_changes() {
+        let dir = tempdir().unwrap();
+        let bank = MemoryBank::open(&dir.path().join("memory.db")).unwrap();
+        let scan_id = bank.start_scan("dry", &["/photos".into()]).unwrap();
+
+        bank.upsert_file(
+            "hash-move",
+            "/photos/old/pic.jpg",
+            "/photos/old/pic.jpg",
+            "pic.jpg",
+            "/photos",
+            4096,
+            1_700_000_000_001,
+            scan_id,
+        )
+        .unwrap();
+
+        let hit = bank
+            .lookup("/photos/new/pic.jpg", "pic.jpg", 4096, 1_700_000_000_001)
+            .unwrap();
+
+        match hit {
+            CacheHit::Filename {
+                hash,
+                previous_path,
+                ..
+            } => {
+                assert_eq!(hash, "hash-move");
+                assert_eq!(previous_path, "/photos/old/pic.jpg");
+            }
+            other => panic!("expected filename cache hit, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn lookup_miss_when_no_cached_record_exists() {
+        let dir = tempdir().unwrap();
+        let bank = MemoryBank::open(&dir.path().join("memory.db")).unwrap();
+
+        let hit = bank.lookup("/photos/missing.jpg", "missing.jpg", 100, 42).unwrap();
+
+        assert!(matches!(hit, CacheHit::Miss));
+    }
+}

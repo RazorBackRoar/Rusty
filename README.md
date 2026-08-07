@@ -155,9 +155,9 @@ macOS bookkeeping files (`.DS_Store`, AppleDouble `._*`, `.Spotlight-V100`,
 
 ---
 
-## The three tabs
+## The five result tabs
 
-The results area has three tabs:
+The results area has five tabs (order: **Files · Duplicates · Similar · Map · Logs**):
 
 - **Files** — the **Scan summary** (folder and file counts, see below) plus a
   unified list of the supported files found, each labelled photo or video **and
@@ -166,9 +166,17 @@ The results area has three tabs:
 - **Duplicates** — the exact-duplicate groups (photos and videos together,
   across every added folder; each file shows its source folder). In Real mode
   the plan/action bar appears here.
+- **Similar** — review-only video similarity matches (requires Homebrew
+  `ffmpeg`/`ffprobe`; never auto-quarantines).
+- **Map** — folder tree with subtree file counts (no filenames).
 - **Logs** — the live scan log, skipped-file/folder reasons, the change and
   cache summaries, and the **Export** button (pinned to the bottom-right, only
   visible while the Logs tab is open).
+
+### Compare mode
+
+The sidebar **Compare** toggle scans two folders in dry mode (all file types).
+Results appear in **Duplicates** but do not affect your main scan plan.
 
 ### Scan summary (folder counts)
 
@@ -391,7 +399,7 @@ Rusty/
 Requires Homebrew-installed Rust (`brew install rust`). No Node.js.
 
 ```zsh
-cd /Users/home/Workspace/Apps/Rusty
+cd /path/to/Rusty
 
 # Install the Tauri CLI into the workspace-local .cargo dir (once)
 cargo install --root .cargo tauri-cli@^2 --locked
@@ -423,6 +431,7 @@ Each release run writes a timestamped log under `build-logs/`.
 
 ## Community & docs
 
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Tauri modules, tabs, Compare mode
 - [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md) — prerequisites, build, packaging, release, versioning
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
 - [SECURITY.md](SECURITY.md) — vulnerability reporting

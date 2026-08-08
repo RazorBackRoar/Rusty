@@ -1,4 +1,4 @@
-#!/Users/home/.local/bin/python3.14
+#!/usr/bin/env python3
 """Enrich Dependabot pull requests with registry metadata and clearer titles."""
 
 from __future__ import annotations

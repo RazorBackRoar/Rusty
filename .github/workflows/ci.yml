@@ -19,6 +19,11 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
       - name: Verify release bundle contract
         run: zsh scripts/release-preflight.zsh --allow-other-root --check-config-only
 

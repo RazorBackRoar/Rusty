@@ -105,7 +105,7 @@ check_release_config() {
     if command -v uv >/dev/null 2>&1; then
         python_runner=(uv run --no-project --python 3.14 python)
     else
-        python_runner=(python3.14)
+        python_runner=(python3)
     fi
 
     "${python_runner[@]}" - "$repo_root/src-tauri/tauri.conf.json" <<'PY' \

@@ -547,7 +547,7 @@ fn walk_roots(
                             if let Ok(mut set) = pruned_for_walk.lock() {
                                 set.insert(paths::normalize_for_storage(&full));
                             }
-                            child.read_children_path = None;
+                            child.read_children = None;
                         }
                     }
                 });

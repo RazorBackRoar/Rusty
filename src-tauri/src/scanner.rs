@@ -470,6 +470,19 @@ pub fn media_kind_for_name(name: &str) -> MediaKind {
     }
 }
 
+#[cfg(test)]
+mod media_kind_tests {
+    use super::*;
+
+    #[test]
+    fn media_kind_for_name_recognizes_photos_and_videos() {
+        assert_eq!(media_kind_for_name("vacation.JPG"), MediaKind::Photo);
+        assert_eq!(media_kind_for_name("clip.MOV"), MediaKind::Video);
+        assert_eq!(media_kind_for_name("notes.txt"), MediaKind::Other);
+        assert_eq!(media_kind_for_name("no_extension"), MediaKind::Other);
+    }
+}
+
 /// `(dev, ino)` uniquely identifies a physical file on unix; two paths sharing
 /// it are hardlinks to the same bytes, not independent copies. Zero on other
 /// platforms (treated as "unknown / not a hardlink").

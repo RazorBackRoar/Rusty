@@ -25,6 +25,10 @@ build-logs/
 .idea/
 .claude/
 
+# Cursor local runtime (hook stamps/index; empty project plugin UI)
+.cursor/hooks/state/
+.cursor/settings.json
+
 # Old CLI scripts kept for reference (huge text guides, legacy SQLite, etc.)
 # Comment out if you actually want these tracked.
 _archive_pre_tauri/
